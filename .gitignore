@@ -23,6 +23,13 @@ media/
 uploads/
 *.astro
 
+# Dados otimizados
+src/modelagem/dados_otimizados/
+
+# Referências grandes
+referencia/ipea/
+referencia/espaciais/
+
 # LIBERAÇÃO EXPLÍCITA DE CÓDIGO (O que DEVE subir)
 !api/
 !src/
