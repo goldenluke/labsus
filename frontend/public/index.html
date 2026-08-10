@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2563eb" />
+
+    <!-- Metadados de SEO e Social -->
+    <meta
+      name="description"
+      content="LabSUS - UFT: Plataforma de inteligência de dados aplicada à gestão e análise de políticas públicas de saúde."
+    />
+    <meta name="author" content="LabSUS UFT" />
+    <link rel="canonical" href="https://labsus.ngrok.app/" />
+
+    <!-- Open Graph / redes sociais -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LabSUS - UFT | Analytical Hub" />
+    <meta property="og:description" content="LabSUS - UFT: Plataforma de inteligência de dados aplicada à gestão e análise de políticas públicas de saúde." />
+    <meta property="og:url" content="https://labsus.ngrok.app/" />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+    <meta property="og:locale" content="pt_BR" />
+
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>LabSUS - UFT | Analytical Hub</title>
+
+    <!-- Google Fonts: Inter (interface) e Lora (títulos editoriais/landing) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Lora:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
+      .font-display { font-family: 'Lora', Georgia, serif; }
+    </style>
+
+    <!-- Dados estruturados (schema.org): o app é renderizado no cliente
+    (React puro, sem SSR/prerender), então o HTML estático é a única coisa
+    garantida a chegar ao Google antes de qualquer execução de JS — este
+    bloco descreve o produto mesmo se o crawler nunca rodar o bundle. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "LabSUS",
+        "alternateName": "LabSUS - UFT Analytical Hub",
+        "applicationCategory": "AnalyticsApplication",
+        "operatingSystem": "Web",
+        "description": "Plataforma de inteligência de dados aplicada à gestão e análise de políticas públicas de saúde, a partir de bases reais do DATASUS (SIM, SIH, SIA, SINASC, SINAN, CNES) e do IBGE.",
+        "url": "https://labsus.ngrok.app/",
+        "creator": {
+          "@type": "Organization",
+          "name": "Laboratório de Inteligência em Saúde - UFT"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      }
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YNZYMG9Q96"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-YNZYMG9Q96');
+    </script>
+  </head>
+  <body>
+    <!-- Fallback estático para quando o JS não roda (crawlers sem execução
+    de JS, leitores de tela muito antigos, JS desabilitado). O conteúdo real
+    e interativo vive em #root — isto é só uma rede de segurança de SEO. -->
+    <noscript>
+      <div style="max-width: 640px; margin: 4rem auto; padding: 0 1.5rem; font-family: Georgia, serif;">
+        <h1>LabSUS - UFT | Analytical Hub</h1>
+        <p>
+          Plataforma de inteligência de dados aplicada à gestão e análise de políticas públicas de saúde,
+          a partir de bases reais do DATASUS (SIM, SIH, SIA, SINASC, SINAN, CNES) e do IBGE. Consolide
+          indicadores por município e ano, e rode dezenas de modelos estatísticos e de aprendizado de
+          máquina sobre eles — sem escrever código.
+        </p>
+        <p>Você precisa habilitar o JavaScript para usar a plataforma completa.</p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

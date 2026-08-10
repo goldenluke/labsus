@@ -1,0 +1,148 @@
+import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import { useLocation } from 'react-router-dom';
+
+export const GEOJSON_PATHS = {
+    'AC': 'geojs-12-mun.json', 'AL': 'geojs-27-mun.json', 'AM': 'geojs-13-mun.json',
+    'AP': 'geojs-16-mun.json', 'BA': 'geojs-29-mun.json', 'CE': 'geojs-23-mun.json',
+    'DF': 'geojs-53-mun.json', 'ES': 'geojs-32-mun.json', 'GO': 'geojs-52-mun.json',
+    'MA': 'geojs-21-mun.json', 'MG': 'geojs-31-mun.json', 'MS': 'geojs-50-mun.json',
+    'MT': 'geojs-51-mun.json', 'PA': 'geojs-15-mun.json', 'PB': 'geojs-25-mun.json',
+    'PE': 'geojs-26-mun.json', 'PI': 'geojs-22-mun.json', 'PR': 'geojs-41-mun.json',
+    'RJ': 'geojs-33-mun.json', 'RN': 'geojs-24-mun.json', 'RO': 'geojs-11-mun.json',
+    'RR': 'geojs-14-mun.json', 'RS': 'geojs-43-mun.json', 'SC': 'geojs-42-mun.json',
+    'SE': 'geojs-28-mun.json', 'SP': 'geojs-35-mun.json', 'TO': 'geojs-17-mun.json',
+};
+
+export const useFluxoPacientesData = () => {
+    const location = useLocation();
+    const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const fileIdFromUrl = queryParams.get('fileId');
+
+    const [allData, setAllData] = useState([]);
+    const [availableFiles, setAvailableFiles] = useState([]);
+    const [selectedFileId, setSelectedFileId] = useState(fileIdFromUrl || '');
+    const [fileDetails, setFileDetails] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedUf, setSelectedUf] = useState('BR');
+    const [minPacientes, setMinPacientes] = useState(5);
+    const [selectedPolo, setSelectedPolo] = useState('');
+    const [geojson, setGeojson] = useState(null);
+    const [loadingMap, setLoadingMap] = useState(false);
+
+    useEffect(() => {
+        const fetchFileList = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', { headers: { 'Authorization': `Token ${token}` }, params: { file_type: 'PATIENT_FLOW' } });
+                const files = response.data.results || [];
+                setAvailableFiles(files);
+                if (fileIdFromUrl && files.some(f => String(f.id) === fileIdFromUrl)) {
+                    setSelectedFileId(fileIdFromUrl);
+                } else if (files.length > 0) {
+                    setSelectedFileId(files[0].id.toString());
+                } else {
+                    setLoading(false);
+                }
+            } catch (err) {
+                setError("Não foi possível carregar a lista de arquivos."); setLoading(false);
+            }
+        };
+        fetchFileList();
+    }, [fileIdFromUrl]);
+
+    useEffect(() => {
+        if (!selectedFileId) { setAllData([]); setFileDetails(null); setLoading(false); return; }
+        const fetchData = async () => {
+            setLoading(true); setError(null);
+            try {
+                const token = localStorage.getItem('authToken');
+                const [detailsRes, dataRes] = await Promise.all([
+                    axios.get(`/api/files/${selectedFileId}/`, { headers: { 'Authorization': `Token ${token}` } }),
+                                                                axios.get(`/api/files/${selectedFileId}/data/`, { headers: { 'Authorization': `Token ${token}` } })
+                ]);
+
+                setFileDetails(detailsRes.data);
+                const processedData = dataRes.data.map(item => ({
+                    ...item,
+                    N_PACIENTES: parseInt(item.N_PACIENTES, 10) || 0,
+                                                                VALOR_TOTAL: parseFloat(String(item.VALOR_TOTAL).replace(',', '.')),
+                                                                lat_origem: parseFloat(String(item.lat_origem).replace(',', '.')),
+                                                                lon_origem: parseFloat(String(item.lon_origem).replace(',', '.')),
+                                                                lat_destino: parseFloat(String(item.lat_destino).replace(',', '.')),
+                                                                lon_destino: parseFloat(String(item.lon_destino).replace(',', '.'))
+                }));
+                setAllData(processedData);
+
+                const minPacientesMatch = detailsRes.data.description.match(/Min. Pacientes:\s*(\d+)/);
+                if (minPacientesMatch) setMinPacientes(parseInt(minPacientesMatch[1], 10));
+            } catch (err) {
+                setError("Não foi possível carregar os dados do arquivo."); console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [selectedFileId]);
+
+    useEffect(() => {
+        const fetchGeojson = async () => {
+            if (!selectedUf || allData.length === 0) { setGeojson(null); return; };
+            setLoadingMap(true); setGeojson(null);
+            let ufsToLoad = selectedUf === 'BR'
+            ? [...new Set([...allData.map(d => d.uf_origem), ...allData.map(d => d.uf_destino)])].filter(Boolean)
+            : [selectedUf];
+            if (ufsToLoad.length === 0) { setLoadingMap(false); return; }
+            try {
+                const promises = ufsToLoad.map(uf => {
+                    const fileName = GEOJSON_PATHS[uf.toUpperCase()];
+                    if (!fileName) return Promise.resolve(null);
+                    return fetch(`/geojson_uf/${fileName}`)
+                    .then(res => res.json())
+                    .then(geojsonData => ({ uf, geojsonData }));
+                });
+
+                const geojsonResults = await Promise.all(promises);
+
+                // ⭐ LÓGICA ATUALIZADA PARA INJETAR A UF EM CADA MUNICÍPIO ⭐
+                const allFeatures = geojsonResults
+                .filter(result => result && result.geojsonData)
+                .flatMap(result => {
+                    return result.geojsonData.features.map(feature => {
+                        feature.properties.UF = result.uf;
+                        return feature;
+                    });
+                });
+
+                if (allFeatures.length > 0) {
+                    setGeojson({ type: "FeatureCollection", features: allFeatures });
+                }
+            } catch (err) {
+                console.error("Erro ao carregar ou combinar GeoJSONs:", err);
+                setError("Falha ao carregar os mapas de fundo.");
+            } finally {
+                setLoadingMap(false);
+            }
+        };
+        fetchGeojson();
+    }, [selectedUf, allData]);
+
+    const flowData = useMemo(() => allData, [allData]);
+    const filteredFlowData = useMemo(() => flowData.filter(d => d.N_PACIENTES >= minPacientes), [flowData, minPacientes]);
+    const availableUfs = useMemo(() => ['BR', ...Array.from(new Set([...flowData.map(d => d.uf_origem), ...flowData.map(d => d.uf_destino)])).filter(Boolean).sort()], [flowData]);
+    const rankingData = useMemo(() => { if (!filteredFlowData.length) return { polos: [], enviadores: [] }; const polos = filteredFlowData.reduce((acc, d) => { const key = `${d.municipio_destino} (${d.uf_destino})`; acc[key] = (acc[key] || 0) + d.N_PACIENTES; return acc; }, {}); const enviadores = filteredFlowData.reduce((acc, d) => { const key = `${d.municipio_origem} (${d.uf_origem})`; acc[key] = (acc[key] || 0) + d.N_PACIENTES; return acc; }, {}); const topPolos = Object.entries(polos).sort((a, b) => b[1] - a[1]).slice(0, 10); const topEnviadores = Object.entries(enviadores).sort((a, b) => b[1] - a[1]).slice(0, 10); return { polos: topPolos, enviadores: topEnviadores }; }, [filteredFlowData]);
+    const polosSankeyOptions = useMemo(() => { if (!rankingData || !rankingData.polos) return []; return rankingData.polos.map(p => p[0]); }, [rankingData]);
+    useEffect(() => { if (polosSankeyOptions.length > 0 && (!selectedPolo || !polosSankeyOptions.includes(selectedPolo))) { setSelectedPolo(polosSankeyOptions[0]); } }, [polosSankeyOptions, selectedPolo]);
+    const sankeyDataAndLayout = useMemo(() => { if (!filteredFlowData || !selectedPolo) return null; const poloNameOnly = selectedPolo.split(' (')[0]; const poloData = filteredFlowData.filter(d => d.municipio_destino === poloNameOnly).sort((a,b) => b.N_PACIENTES - a.N_PACIENTES); if (poloData.length === 0) return null; const originLabels = poloData.map(d => `${d.municipio_origem} (${d.uf_origem})`); const labels = [selectedPolo, ...new Set(originLabels)]; const dynamicHeight = Math.max(500, labels.length * 28); const plotData = [{ type: 'sankey', orientation: 'h', node: { pad: 10, thickness: 15, line: { color: 'black', width: 0.5 }, label: labels, }, link: { source: poloData.map(d => labels.indexOf(`${d.municipio_origem} (${d.uf_origem})`)), target: poloData.map(() => 0), value: poloData.map(d => d.N_PACIENTES), } }]; const layout = { title: `Fluxo de Pacientes para ${selectedPolo}`, height: dynamicHeight, font: { size: 12 }, margin: { t: 50, b: 50, l: 50, r: 50 } }; return { plotData, layout }; }, [filteredFlowData, selectedPolo]);
+
+    return {
+        loading, error, fileDetails, availableFiles, selectedFileId, setSelectedFileId,
+        flowData, filteredFlowData, availableUfs, selectedUf, setSelectedUf,
+        minPacientes, setMinPacientes,
+        loadingMap, geojson,
+        rankingData,
+        polosSankeyOptions, selectedPolo, setSelectedPolo, sankeyDataAndLayout
+    };
+};

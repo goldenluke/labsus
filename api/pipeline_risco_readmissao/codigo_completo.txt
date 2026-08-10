@@ -1,0 +1,408 @@
+# === Início do arquivo: ./__init__.py ===
+
+
+
+# === Fim do arquivo: ./__init__.py ===
+
+# === Início do arquivo: ./admin.py ===
+
+from django.contrib import admin
+from .models import ReadmissaoTaskStatus
+
+@admin.register(ReadmissaoTaskStatus)
+class ReadmissaoTaskStatusAdmin(admin.ModelAdmin):
+    """
+    Configuração da interface de administração para o modelo ReadmissaoTaskStatus.
+    """
+    list_display = ('task_id', 'user', 'status', 'risk_score', 'created_at', 'updated_at')
+    list_filter = ('status', 'user', 'created_at')
+    search_fields = ('task_id', 'user__username')
+
+    # ⭐ CORREÇÃO: Removido 'results_summary' que não existe neste modelo.
+    readonly_fields = ('task_id', 'created_at', 'updated_at', 'patient_data')
+
+
+# === Fim do arquivo: ./admin.py ===
+
+# === Início do arquivo: ./apps.py ===
+
+from django.apps import AppConfig
+
+class PipelineRiscoReadmissaoConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'api.pipeline_risco_readmissao'
+    label = 'pipeline_risco_readmissao' # Adicione este rótulo
+
+
+# === Fim do arquivo: ./apps.py ===
+
+# === Início do arquivo: ./models.py ===
+
+from django.db import models
+from django.conf import settings
+import uuid
+
+class ReadmissaoTaskStatus(models.Model):
+    task_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=20, default='PENDING')
+
+    # Parâmetros de entrada
+    patient_data = models.JSONField(help_text="Dados do paciente usados para a previsão.")
+
+    # Resultados
+    risk_score = models.FloatField(null=True, blank=True, help_text="Score de risco de readmissão (0 a 1).")
+    output_image_file = models.ForeignKey(
+        'api.ManagedFile',
+        on_delete=models.SET_NULL, null=True, blank=True,
+        help_text="Arquivo de imagem com a explicação SHAP."
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    message = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Previsão de Readmissão {self.task_id} - {self.status}"
+
+
+# === Fim do arquivo: ./models.py ===
+
+# === Início do arquivo: ./tasks.py ===
+
+from celery import shared_task
+from django.conf import settings
+from django.apps import apps
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import logging
+import os
+import joblib
+import shap
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import re
+import unicodedata
+from api.models import FileType
+
+logger = logging.getLogger(__name__)
+
+MODEL_DIR = settings.BASE_DIR / 'api' / 'ml_models'
+MODEL_PATH = MODEL_DIR / 'lgbm_readmission_model.joblib'
+X_TEST_PATH = MODEL_DIR / 'X_test.parquet'
+
+def secure_filename(filename):
+    filename = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
+    filename = re.sub(r'[\\/*?:"<>|]', '', filename)
+    if filename.startswith('.'):
+        filename = filename[1:]
+    if not filename.strip():
+        return "arquivo_sem_nome"
+    return filename.strip()
+
+def engineer_features_for_patient(patient_df):
+    logger.info("Aplicando engenharia de atributos...")
+    patient_df['CAPITULO_CID'] = patient_df['DIAG_PRINC'].str[0]
+    patient_df = patient_df.drop(columns=['DIAG_PRINC'])
+    logger.info("Features transformadas com sucesso.")
+    return patient_df
+
+@shared_task(bind=True)
+def run_readmission_prediction(self, user_id, patient_data, output_filename=None, output_csv_filename=None):
+    ManagedFile = apps.get_model('api', 'ManagedFile')
+    User = apps.get_model(settings.AUTH_USER_MODEL)
+    ReadmissaoTaskStatus = apps.get_model('pipeline_risco_readmissao', 'ReadmissaoTaskStatus')
+
+    task_id = self.request.id
+    user = User.objects.get(id=user_id) if user_id else None
+
+    task_status_entry, _ = ReadmissaoTaskStatus.objects.get_or_create(
+        task_id=task_id,
+        defaults={'user': user, 'status': 'STARTED', 'patient_data': patient_data}
+    )
+
+    try:
+        # --- Lógica de Previsão e Geração de Gráfico (sem alterações) ---
+        self.update_state(state='PROGRESS', meta={'progress': 10, 'message': 'Carregando modelo...'})
+        model = joblib.load(MODEL_PATH)
+        X_test = pd.read_parquet(X_TEST_PATH)
+        explainer = shap.TreeExplainer(model)
+        self.update_state(state='PROGRESS', meta={'progress': 30, 'message': 'Preparando dados...'})
+        patient_df_raw = pd.DataFrame([patient_data])
+        patient_df_featured = engineer_features_for_patient(patient_df_raw)
+        patient_df = patient_df_featured.reindex(columns=X_test.columns, fill_value=np.nan)
+        for col in X_test.columns:
+            if X_test[col].dtype.name == 'category':
+                patient_df[col] = pd.Categorical(patient_df[col], categories=X_test[col].cat.categories)
+            else:
+                patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
+        self.update_state(state='PROGRESS', meta={'progress': 50, 'message': 'Realizando previsão...'})
+        prediction_proba = model.predict_proba(patient_df)
+        risk_score = prediction_proba[0, 1]
+        self.update_state(state='PROGRESS', meta={'progress': 70, 'message': 'Gerando explicação...'})
+        shap_values = explainer.shap_values(patient_df)
+        if isinstance(shap_values, list): shap_values_risk = shap_values[1]
+        else: shap_values_risk = shap_values
+        if isinstance(explainer.expected_value, list): base_value = explainer.expected_value[1]
+        else: base_value = explainer.expected_value
+        feature_name_map = {
+            'IDADE': 'Idade', 'DIAS_PERM': 'Dias de Permanência',
+            'USOU_UTI': 'Utilizou UTI', 'CAPITULO_CID': 'Grupo do Diagnóstico',
+            'SEXO': 'Sexo', 'RACA_COR': 'Raça/Cor', 'CAR_INT': 'Caráter da Internação',
+            'HOSP_NATUREZA': 'Natureza do Hospital', 'HOSP_LEITOS': 'Nº de Leitos do Hospital'
+        }
+
+        patient_df_renamed = patient_df.rename(columns=feature_name_map)
+        fig, ax = plt.subplots(figsize=(12, 8))
+        shap.waterfall_plot(shap.Explanation(values=shap_values_risk[0], base_values=base_value, data=patient_df_renamed.iloc[0]), max_display=15, show=False)
+        plt.tight_layout()
+        output_dir = Path(settings.MEDIA_ROOT) / "processed_data" / "readmissao"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # --- Fim da Lógica de Previsão ---
+
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'message': 'Salvando resultados...'})
+
+        # ⭐ 1. CONSTRUIR A DESCRIÇÃO DETALHADA ⭐
+        desc_parts = [
+            f"Score de Risco Calculado: {risk_score:.2%}",
+            f"Idade: {patient_data.get('IDADE')}",
+            f"Dias de Permanência: {patient_data.get('DIAS_PERM')}",
+            f"Nº de Comorbidades: {patient_data.get('N_COMORBIDADES')}",
+            f"Usou UTI: {'Sim' if patient_data.get('USOU_UTI') == 1 else 'Não'}",
+            f"Diagnóstico Principal: {patient_data.get('DIAG_PRINC')}"
+        ]
+        csv_description = ". ".join(part for part in desc_parts if part is not None) + "."
+
+        # --- Lógica para salvar o CSV ---
+        resultado_df = pd.DataFrame([patient_data])
+        resultado_df['RISCO_READMISSAO_30D'] = risk_score
+        csv_filename_base = output_csv_filename or f"previsao_paciente_{task_id}"
+        csv_filename = secure_filename(f"{csv_filename_base}.csv")
+        csv_path = output_dir / csv_filename
+        resultado_df.to_csv(csv_path, sep=';', index=False, encoding='utf-8-sig')
+
+        # Cria um ManagedFile para o CSV de resultado
+        relative_csv_path = os.path.relpath(csv_path, settings.MEDIA_ROOT)
+        output_csv_file = ManagedFile.objects.create(
+            uploader=user,
+            file=relative_csv_path,
+            filename=csv_filename,
+            description=csv_description, # ⭐ 2. USA A NOVA DESCRIÇÃO
+            file_type=FileType.RISK_PREDICTION,
+            task_id=task_id
+        )
+
+        # --- Lógica para salvar a imagem SHAP ---
+        image_filename_base = output_filename or f"shap_explanation_{task_id}"
+        image_filename = secure_filename(f"{image_filename_base}.png")
+        image_path = output_dir / image_filename
+        plt.savefig(image_path, dpi=150, bbox_inches='tight')
+        plt.close(fig)
+
+        # Cria um ManagedFile para a imagem de explicação
+        relative_image_path = os.path.relpath(image_path, settings.MEDIA_ROOT)
+        output_image_file = ManagedFile.objects.create(
+            uploader=user,
+            file=relative_image_path,
+            filename=image_filename,
+            description=f"Gráfico de explicação SHAP para a previsão '{csv_filename}'.",
+            task_id=task_id,
+            file_type='OTHER'
+        )
+
+        # --- Atualiza o status final da tarefa ---
+        task_status_entry.status = 'SUCCESS'
+        task_status_entry.risk_score = risk_score
+        task_status_entry.output_image_file = output_image_file
+        task_status_entry.message = f"Previsão concluída. Risco: {risk_score:.2%}"
+        task_status_entry.save()
+
+        return {
+            'status': 'SUCCESS',
+            'risk_score': risk_score,
+            'output_csv_id': output_csv_file.id,
+            'output_image_id': output_image_file.id
+        }
+
+    except Exception as e:
+        logger.exception(f"Falha na pipeline de previsão de readmissão {task_id}.")
+        task_status_entry.status = 'FAILURE'
+        task_status_entry.message = str(e)
+        task_status_entry.save()
+        raise
+
+
+# === Fim do arquivo: ./tasks.py ===
+
+# === Início do arquivo: ./tests.py ===
+
+from django.test import TestCase
+
+# Create your tests here.
+
+
+# === Fim do arquivo: ./tests.py ===
+
+# === Início do arquivo: ./urls.py ===
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Rota para disparar a pipeline: POST para /api/pipelines/risco-readmissao/trigger/
+    path('trigger/', views.trigger_readmission_pipeline, name='readmissao-trigger'),
+
+    # Rota para listar o histórico de tarefas: GET para /api/pipelines/risco-readmissao/tasks/
+    path('tasks/', views.ReadmissaoTaskListView.as_view(), name='readmissao-task-list'),
+    path('tasks/<uuid:pk>/', views.ReadmissaoTaskDetailView.as_view(), name='readmissao-task-detail'),
+
+    # Rota para verificar o status de uma tarefa: GET para /api/pipelines/risco-readmissao/tasks/<task_id>/status/
+    path('tasks/<uuid:task_id>/status/', views.get_readmission_task_status, name='readmissao-task-status'),
+]
+
+
+# === Fim do arquivo: ./urls.py ===
+
+# === Início do arquivo: ./views.py ===
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status, generics
+import logging
+from celery.result import AsyncResult
+
+# Imports locais da pipeline
+from .tasks import run_readmission_prediction
+from .models import ReadmissaoTaskStatus
+from api.serializers import ReadmissaoTaskStatusSerializer # Importa o serializer que criámos
+
+logger = logging.getLogger(__name__)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def trigger_readmission_pipeline(request):
+    patient_data = request.data.get('patient_data')
+    # ⭐ 1. OBTÉM O NOME DO FICHEIRO DO PEDIDO ⭐
+    output_filename = request.data.get('output_filename', None)
+    user_id = request.user.id
+
+    if not isinstance(patient_data, dict):
+        return Response(
+            {'error': 'O corpo da requisição deve conter um objeto JSON na chave "patient_data".'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        task = run_readmission_prediction.delay(
+            user_id=user_id,
+            patient_data=patient_data,
+            # ⭐ 2. PASSA O NOME DO FICHEIRO PARA A TAREFA ⭐
+            output_filename=output_filename
+        )
+        return Response({'task_id': task.id}, status=status.HTTP_202_ACCEPTED)
+    except Exception as e:
+        logger.exception("Erro ao disparar a pipeline de previsão de readmissão.")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_readmission_task_status(request, task_id):
+    """
+    Verifica e retorna o status de uma tarefa Celery específica.
+    """
+    task_id_str = str(task_id)
+    result = AsyncResult(task_id_str)
+    response_data = {
+        'task_id': task_id_str,
+        'status': result.status,
+    }
+
+    if result.status == 'PROGRESS':
+        response_data['progress'] = result.info.get('progress', 0)
+        response_data['message'] = result.info.get('message', 'Em progresso...')
+    elif result.status == 'SUCCESS':
+        response_data['result'] = result.result
+    elif result.status == 'FAILURE':
+        response_data['error'] = str(result.result)
+
+    return Response(response_data)
+
+
+class ReadmissaoTaskListView(generics.ListAPIView):
+    """
+    Endpoint para listar o histórico de todas as tarefas de previsão de readmissão
+    executadas pelo utilizador logado.
+    """
+    serializer_class = ReadmissaoTaskStatusSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Retorna apenas as tarefas do utilizador que fez a requisição, ordenadas pela mais recente
+        return ReadmissaoTaskStatus.objects.filter(user=self.request.user).order_by('-created_at')
+
+    # ⭐ ADICIONE ESTA NOVA CLASSE AO FINAL DO FICHEIRO ⭐
+class ReadmissaoTaskDetailView(generics.RetrieveAPIView):
+    """
+    Endpoint para obter os detalhes completos de uma única tarefa de previsão de readmissão.
+    """
+    serializer_class = ReadmissaoTaskStatusSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = ReadmissaoTaskStatus.objects.all()
+    lookup_field = 'pk' # Diz à view para procurar pelo ID da tarefa (pk)
+
+    def get_queryset(self):
+        # Garante que um utilizador só pode ver as suas próprias tarefas
+        return ReadmissaoTaskStatus.objects.filter(user=self.request.user)
+
+
+# === Fim do arquivo: ./views.py ===
+
+# === Início do arquivo: ./migrations/0001_initial.py ===
+
+# Generated by Django 5.2.4 on 2025-07-30 02:35
+
+import django.db.models.deletion
+import uuid
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ('api', '0006_alter_managedfile_file_type'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='ReadmissaoTaskStatus',
+            fields=[
+                ('task_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('status', models.CharField(default='PENDING', max_length=20)),
+                ('patient_data', models.JSONField(help_text='Dados do paciente usados para a previsão.')),
+                ('risk_score', models.FloatField(blank=True, help_text='Score de risco de readmissão (0 a 1).', null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('message', models.TextField(blank=True, null=True)),
+                ('output_image_file', models.ForeignKey(blank=True, help_text='Arquivo de imagem com a explicação SHAP.', null=True, on_delete=django.db.models.deletion.SET_NULL, to='api.managedfile')),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+    ]
+
+
+# === Fim do arquivo: ./migrations/0001_initial.py ===
+
+# === Início do arquivo: ./migrations/__init__.py ===
+
+
+
+# === Fim do arquivo: ./migrations/__init__.py ===
+

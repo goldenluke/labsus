@@ -1,0 +1,396 @@
+# api/pipeline_kmeans/tasks.py
+
+from celery import shared_task
+from django.conf import settings
+from django.apps import apps
+import pandas as pd
+import os
+import logging
+from pathlib import Path
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import euclidean # Para classificar arquétipos
+import warnings
+import numpy as np # Necessário para np.number e outras operações Pandas/NumPy
+
+# Suprimir avisos específicos do scikit-learn
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.cluster._kmeans")
+
+logger = logging.getLogger(__name__)
+
+# Definir a raiz geral do projeto (mesma lógica que em api/pipeline_indicadores/tasks.py)
+PROJECT_ROOT_GENERAL = Path("/home/lucas/cognisaude")
+
+# Caminho padrão para o arquivo de arquétipos (dentro de referencia/kmeans/)
+DEFAULT_ARCHETYPES_PATH = PROJECT_ROOT_GENERAL / "referencia" / "kmeans" / "arquetipos.csv"
+
+# Cores para os Perfis (fallback) - Deve ser consistente com o seu config/polaridadeIndicadores
+CORES_PERFIS_DEFAULT = {
+    "Vulnerabilidade Social/Sanitária": "#d73027",
+    "Sobrecarga de Doenças Crônicas": "#fc8d59",
+    "Atenção Primária Insuficiente": "#4575b4",
+    "Atenção Primária Efetiva": "#1a9850",
+    "Perfil Desconhecido": "#cccccc"
+}
+
+
+# --- Funções auxiliares movidas do script original K-Means ---
+
+def carregar_arquetipos(archetypes_path: Path, indicator_columns: list) -> tuple[dict, dict]:
+    """
+    Carrega arquétipos de um arquivo CSV, valida colunas e extrai cores.
+    """
+    logger.info(f"\n--- Carregando arquétipos de: {archetypes_path} ---")
+    if not archetypes_path.exists():
+        logger.error(f"ERRO: Arquivo de arquétipos não encontrado em '{archetypes_path}'.")
+        return {}, {}
+
+    try:
+        df_arquetipos = pd.read_csv(archetypes_path)
+        arquetipos = {}
+        cores_perfis_dict = {}
+        perfil_col = df_arquetipos.columns[0] # Assume a primeira coluna como o nome do perfil
+
+        has_color_col = 'Cor_Hex' in df_arquetipos.columns
+
+        arquetipo_cols_data = [col for col in df_arquetipos.columns if col != perfil_col and col != 'Cor_Hex']
+        if not all(ind in arquetipo_cols_data for ind in indicator_columns):
+            missing_cols = [ind for ind in indicator_columns if ind not in arquetipo_cols_data]
+            logger.error(f"ERRO: O arquivo de arquétipos não contém todas as colunas de indicadores esperadas para o agrupamento. Faltam: {missing_cols}")
+            logger.info(f"  Colunas de dados no arquivo de arquétipos: {arquetipo_cols_data}")
+            logger.info(f"  Colunas de indicadores para agrupamento: {indicator_columns}")
+            return {}, {}
+
+        for index, row in df_arquetipos.iterrows():
+            perfil_nome = str(row[perfil_col])
+            arquetipos[perfil_nome] = pd.Series(row[indicator_columns].values, index=indicator_columns)
+
+            if has_color_col:
+                cores_perfis_dict[perfil_nome] = str(row['Cor_Hex'])
+            else:
+                cores_perfis_dict[perfil_nome] = "#cccccc"
+
+        if not has_color_col:
+            logger.warning("Aviso: Coluna 'Cor_Hex' não encontrada no arquivo de arquétipos. Cores padrão internas serão usadas.")
+
+        logger.info(f"✅ Arquétipos e cores carregados com sucesso. Perfis encontrados: {list(arquetipos.keys())}")
+        return arquetipos, cores_perfis_dict
+    except Exception as e:
+        logger.error(f"ERRO ao carregar ou processar o arquivo de arquétipos: {e}", exc_info=True)
+        return {}, {}
+
+
+def classificar_perfis_por_similaridade(cluster_centers_scaled_df: pd.DataFrame, arquetipos_scaled: dict) -> dict:
+    """
+    Classifica cada cluster encontrado medindo sua distância euclidiana
+    para um conjunto de arquétipos pré-definidos.
+    """
+    mapeamento = {}
+    if not arquetipos_scaled:
+        logger.warning("Nenhum arquétipo fornecido para classificação. Clusters não serão nomeados.")
+        return {i: "Perfil Desconhecido" for i in cluster_centers_scaled_df.index}
+
+    for i, row in cluster_centers_scaled_df.iterrows(): # Itera sobre os centros dos clusters
+        distancias = {}
+        for nome_arquetipo, valores_arquetipo in arquetipos_scaled.items():
+            # Calcula a distância euclidiana entre o centro do cluster (row.values) e o arquétipo
+            # Ambos devem estar na mesma ordem de features e escala
+            distancias[nome_arquetipo] = euclidean(row.values, valores_arquetipo)
+
+        if distancias:
+            perfil_mais_proximo = min(distancias, key=distancias.get)
+            mapeamento[i] = perfil_mais_proximo
+        else:
+            mapeamento[i] = "Perfil Desconhecido"
+    logger.info(f"Classificação de perfis concluída: {mapeamento}")
+    return mapeamento
+
+
+def carregar_e_preparar_dados_indicadores(input_csv_path: Path, ufs: list, anos: list, indicadores_selecionados: list) -> pd.DataFrame:
+    """
+    Carrega o DataFrame de indicadores de um arquivo CSV, aplica filtros,
+    trata NaNs e identifica colunas para o agrupamento.
+    """
+    logger.info(f"\n--- Carregando dados de indicadores de: {input_csv_path} ---")
+    if not input_csv_path.exists():
+        logger.error(f"ERRO: Arquivo de dados de indicadores não encontrado em '{input_csv_path}'.")
+        return pd.DataFrame()
+
+    try:
+        df_painel = pd.read_csv(input_csv_path, sep=';', dtype={'cod_mun_ibge_6': str, 'cod_mun_ibge_7': str})
+        logger.info(f"✅ Dados de indicadores carregados com sucesso. Shape: {df_painel.shape}")
+
+        if ufs:
+            df_painel = df_painel[df_painel['UF'].isin(ufs)]
+            logger.info(f"  -> Dados filtrados por UFs ({ufs}). Novo shape: {df_painel.shape}")
+        if anos:
+            df_painel = df_painel[df_painel['ANO'].isin(anos)]
+            logger.info(f"  -> Dados filtrados por Anos ({anos}). Novo shape: {df_painel.shape}")
+
+        # Identifica as colunas de indicadores para o clustering
+        if indicadores_selecionados:
+            missing_indicators = [ind for ind in indicadores_selecionados if ind not in df_painel.columns]
+            if missing_indicators:
+                logger.warning(f"AVISO: Os seguintes indicadores selecionados não foram encontrados no CSV: {missing_indicators}. Serão ignorados.")
+
+            # Filtra apenas indicadores que realmente existem no DF
+            final_indicators = [ind for ind in indicadores_selecionados if ind in df_painel.columns]
+
+            if not final_indicators:
+                logger.error("ERRO: Nenhuma coluna de indicador válida para processar após a filtragem por seleção.")
+                return pd.DataFrame()
+
+            # Garante que sejam numéricas e lida com NaNs antes do K-Means
+            for col in final_indicators:
+                 df_painel[col] = pd.to_numeric(df_painel[col], errors='coerce') # Coerce NaNs para evitar erros
+
+            # Mantém apenas as colunas essenciais e os indicadores selecionados
+            cols_to_keep = ['cod_mun_ibge_6', 'ANO', 'UF', 'municipio', 'cod_mun_ibge_7', 'perfil'] + final_indicators
+            df_painel = df_painel[[col for col in cols_to_keep if col in df_painel.columns]].copy()
+            logger.info(f"  -> Usando indicadores selecionados: {final_indicators}")
+
+        else:
+            # Tenta identificar automaticamente as colunas de indicadores (todas as numéricas, maiúsculas, exceto chaves)
+            all_numeric_cols = df_painel.select_dtypes(include=np.number).columns.tolist()
+            potential_indicators = [col for col in all_numeric_cols if col.isupper() and col not in ['ANO', 'MES']]
+
+            if 'populacao' in potential_indicators: potential_indicators.remove('populacao')
+            if 'cod_mun_ibge_7' in potential_indicators: potential_indicators.remove('cod_mun_ibge_7')
+            # Add other specific columns you want to exclude from being treated as indicators
+            if 'cod_mun_ibge_6' in potential_indicators: potential_indicators.remove('cod_mun_ibge_6')
+
+            if not potential_indicators:
+                logger.error("ERRO: Nenhuma coluna de indicador numérica foi identificada automaticamente. Por favor, especifique-as com '--indicadores'.")
+                return pd.DataFrame()
+
+            cols_to_keep = ['cod_mun_ibge_6', 'ANO', 'UF', 'municipio', 'cod_mun_ibge_7', 'perfil'] + potential_indicators
+            df_painel = df_painel[[col for col in cols_to_keep if col in df_painel.columns]].copy()
+            logger.info(f"  -> Usando indicadores identificados automaticamente: {potential_indicators}")
+
+        # Remove linhas com valores ausentes nos indicadores que serão usados para o cluster
+        # CRÍTICO para K-Means: Ele não lida com NaNs
+        df_painel.dropna(subset=df_painel.columns.intersection(df_painel.select_dtypes(include=np.number).columns.tolist()), inplace=True)
+        logger.info(f"  -> Linhas com valores ausentes nos indicadores de cluster removidas. Novo shape: {df_painel.shape}")
+
+        if df_painel.empty:
+            logger.error("ERRO: DataFrame vazio após filtragem e remoção de NaNs. Nenhuma análise K-Means será realizada.")
+            return pd.DataFrame()
+
+        # Garante que 'ANO' é inteiro
+        if 'ANO' in df_painel.columns:
+            df_painel['ANO'] = df_painel['ANO'].astype(int)
+
+        return df_painel
+
+    except Exception as e:
+        logger.error(f"ERRO ao carregar ou preparar o arquivo de indicadores para K-Means: {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+def executar_kmeans_personalizado(df_painel: pd.DataFrame, num_clusters: int, output_dir: Path, arquetipos: dict = None, cores_perfis: dict = None, output_filename_prefix: str = "kmeans_results"):
+    """
+    Executa o algoritmo K-Means em um DataFrame de indicadores, classifica e salva.
+    """
+    logger.info(f"\n--- Executando K-Means com k={num_clusters} ---")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Identifica colunas para agrupamento (todas as numéricas, exceto chaves)
+    features_para_cluster = df_painel.select_dtypes(include=np.number).copy()
+
+    if features_para_cluster.empty:
+        logger.error("ERRO: Nenhuma coluna numérica válida encontrada para o agrupamento K-Means.")
+        return
+
+    # Padronização dos dados
+    logger.info("🔄 Padronizando os dados (StandardScaler)...")
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(features_para_cluster)
+    df_scaled = pd.DataFrame(scaled_features, columns=features_para_cluster.columns, index=df_painel.index)
+    logger.info("✅ Dados padronizados com sucesso.")
+
+    # Execução do K-Means
+    try:
+        if len(df_scaled) < num_clusters:
+            logger.error(f"ERRO: Número de amostras ({len(df_scaled)}) é menor que o número de clusters ({num_clusters}). Agrupamento não pode ser realizado.")
+            return
+
+        kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10)
+        df_painel['cluster_num'] = kmeans.fit_predict(df_scaled)
+        logger.info("✅ K-Means executado com sucesso.")
+
+        # Obtém os centros dos clusters (em escala original e padronizada)
+        cluster_centers_scaled = pd.DataFrame(kmeans.cluster_centers_, columns=features_para_cluster.columns)
+        cluster_centers_original_scale = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=features_para_cluster.columns)
+        cluster_centers_original_scale.index.name = 'cluster_id'
+        logger.info("\nCentros dos Clusters (escala original):")
+        logger.info(cluster_centers_original_scale)
+
+        # --- Classificação dos Clusters com Arquétipos (se fornecidos) ---
+        if arquetipos:
+            logger.info("\n--- Classificando clusters com arquétipos ---")
+            arquetipos_scaled = {}
+            for nome_arquetipo, serie_arquetipo in arquetipos.items():
+                try:
+                    arquetipo_values_ordered = serie_arquetipo[features_para_cluster.columns].values.reshape(1, -1)
+                    arquetipos_scaled[nome_arquetipo] = pd.Series(
+                        scaler.transform(arquetipo_values_ordered)[0],
+                        index=features_para_cluster.columns
+                    )
+                except KeyError as ke:
+                    logger.warning(f"AVISO: Arquétipo '{nome_arquetipo}' não contém todas as colunas de indicadores usadas para agrupamento. Erro: {ke}. Ignorando este arquétipo.")
+                    continue
+                except ValueError as ve:
+                    logger.warning(f"AVISO: Erro ao padronizar arquétipo '{nome_arquetipo}'. Certifique-se de que os valores numéricos estão corretos. Erro: {ve}. Ignorando este arquétipo.")
+                    continue
+
+            if arquetipos_scaled:
+                mapeamento_nomes = classificar_perfis_por_similaridade(cluster_centers_scaled, arquetipos_scaled)
+                logger.info(f" -> Mapeamento de perfis: {mapeamento_nomes}")
+                df_painel['perfil'] = df_painel['cluster_num'].map(mapeamento_nomes).fillna("Perfil Desconhecido")
+                # Usa as cores carregadas do arquivo de arquétipos, com fallback para as cores padrão
+                df_painel['cor'] = df_painel['perfil'].map(cores_perfis if cores_perfis else CORES_PERFIS_DEFAULT).fillna("#cccccc")
+                logger.info("✅ Clusters classificados com sucesso.")
+            else:
+                logger.warning("Nenhum arquétipo válido para comparação após filtragem. Clusters não serão classificados por perfil.")
+                df_painel['perfil'] = "Cluster " + df_painel['cluster_num'].astype(str)
+                df_painel['cor'] = "#cccccc"
+        else:
+            logger.warning("Nenhum arquivo de arquétipos fornecido. Clusters não serão classificados por perfil.")
+            df_painel['perfil'] = "Cluster " + df_painel['cluster_num'].astype(str)
+            df_painel['cor'] = "#cccccc"
+
+    except Exception as e:
+        logger.error(f"ERRO ao executar o K-Means ou classificar clusters: {e}", exc_info=True)
+        return
+
+    # Salvando os resultados
+    output_filename_base = f"{output_filename_prefix}_{num_clusters}_clusters"
+    output_clustered_data_path = output_dir / f"{output_filename_base}.csv"
+    df_painel.to_csv(output_clustered_data_path, index=False, sep=';', encoding='utf-8-sig')
+    logger.info(f"✅ Dados com rótulos de cluster e perfis salvos em: '{output_clustered_data_path}'")
+
+    output_cluster_centers_path = output_dir / f"centros_dos_clusters_{output_filename_base}.csv"
+    cluster_centers_original_scale.to_csv(output_cluster_centers_path, index=True, sep=';', encoding='utf-8-sig')
+    logger.info(f"✅ Centros dos clusters (escala original) salvos em: '{output_cluster_centers_path}'")
+
+    return output_clustered_data_path, output_cluster_centers_path # Retorna os caminhos dos arquivos criados
+
+# --- TASK PRINCIPAL DO K-MEANS ---
+@shared_task(bind=True)
+def run_kmeans_pipeline(self, input_file_id, n_clusters, features_for_clustering=None, archetypes_path=None, user_id=None):
+    ManagedFile = apps.get_model('api', 'ManagedFile')
+    User = apps.get_model(settings.AUTH_USER_MODEL)
+    KMeansTaskStatus = apps.get_model('pipeline_kmeans', 'KMeansTaskStatus') # Usar o modelo do app KMeans
+
+    task_id = self.request.id
+    user = User.objects.get(id=user_id) if user_id else None
+
+    task_status_entry = None
+    output_file_instance = None # Inicializa para garantir que exista no finally
+
+    try:
+        # Tenta obter ou criar o status da task
+        task_status_entry, created = KMeansTaskStatus.objects.get_or_create(
+            task_id=task_id,
+            defaults={
+                'user': user,
+                'status': 'STARTED',
+                'input_file': ManagedFile.objects.get(id=input_file_id),
+                'n_clusters': n_clusters,
+                'features_for_clustering': features_for_clustering,
+                'message': 'Pipeline K-Means iniciada.'
+            }
+        )
+        if not created:
+            task_status_entry.status = 'STARTED'
+            task_status_entry.message = 'Pipeline K-Means reiniciada.'
+            task_status_entry.save()
+
+        self.update_state(state='PROGRESS', meta={'progress': 5, 'message': 'Carregando arquivo de indicadores...'})
+        logger.info(f"🚀 INICIANDO O PIPELINE K-MEANS (Task: {task_id}) 🚀")
+
+        # 1. Carregar e Preparar Dados de Entrada
+        # Assumimos que input_file_id aponta para um CSV já consolidado.
+        input_managed_file = ManagedFile.objects.get(id=input_file_id)
+        input_csv_path = Path(input_managed_file.file.path)
+
+        # Filtros de UF e Ano podem ser adicionados aqui se a análise for segmentada antes do K-Means
+        # Ou o CSV de entrada já deve estar pré-filtrado.
+        # Para um K-Means nacional/por arquivo, passamos ufs=[] e anos=[] para carregar_e_preparar_dados_indicadores
+
+        df_painel_integrado = carregar_e_preparar_dados_indicadores(
+            input_csv_path=input_csv_path,
+            ufs=[], # Filtrar por todas as UFs para K-means nacional
+            anos=[], # Filtrar por todos os anos para K-means nacional
+            indicadores_selecionados=features_for_clustering # Usa as features passadas para o cluster
+        )
+
+        if df_painel_integrado.empty:
+            raise Exception("DataFrame de indicadores vazio ou não pôde ser preparado para K-Means. Verifique os dados de entrada e filtros.")
+        logger.info(f"✅ Painel de dados integrado e preparado para K-Means. Shape: {df_painel_integrado.shape}")
+
+        # 2. Carregar Arquétipos
+        arquetipos_carregados = {}
+        cores_perfis_carregadas = {}
+        if archetypes_path:
+            archetypes_path_obj = Path(archetypes_path)
+            # A lista de colunas para validação dos arquétipos são as FEATURES do cluster
+            arquetipo_validation_cols = df_painel_integrado.select_dtypes(include=np.number).columns.tolist()
+            arquetipos_carregados, cores_perfis_carregadas = carregar_arquetipos(archetypes_path_obj, arquetipo_validation_cols)
+            if not arquetipos_carregados:
+                logger.warning("Arquétipos não puderam ser carregados ou validados. A classificação por perfil não será aplicada.")
+                cores_perfis_carregadas = {}
+
+        # 3. Executar K-Means
+        self.update_state(state='PROGRESS', meta={'progress': 50, 'message': 'Executando algoritmo K-Means...'})
+
+        # Define o diretório de saída para os resultados do K-Means
+        kmeans_output_dir = Path(settings.MEDIA_ROOT) / "processed_data" / "kmeans" / task_id # Subpasta única por task_id
+
+        # O `executar_kmeans_personalizado` retornará os caminhos dos arquivos criados
+        output_clustered_data_path, output_cluster_centers_path = executar_kmeans_personalizado(
+            df_painel=df_painel_integrado,
+            num_clusters=n_clusters,
+            output_dir=kmeans_output_dir,
+            arquetipos=arquetipos_carregados,
+            cores_perfis=cores_perfis_carregadas,
+            output_filename_prefix=f"kmeans_clusters_{n_clusters}" # Prefixo para os nomes dos arquivos de saída
+        )
+
+        if not output_clustered_data_path or not output_clustered_data_path.exists():
+            raise Exception("Execução K-Means não gerou o arquivo de dados de clusters esperado.")
+
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'message': 'Registrando resultados...'})
+
+        # 4. Criar um ManagedFile para o arquivo de saída do K-Means
+        # O caminho do arquivo deve ser relativo a settings.MEDIA_ROOT
+        relative_output_path = os.path.relpath(output_clustered_data_path, settings.MEDIA_ROOT)
+
+        output_file_instance, created = ManagedFile.objects.update_or_create(
+            file=relative_output_path,
+            defaults={
+                'uploader': user,
+                'filename': output_clustered_data_path.name,
+                'description': f"Resultado K-Means ({n_clusters} clusters) para {input_managed_file.filename}",
+                'file_type': 'K_MEANS' # NOVO TIPO DE ARQUIVO para visualizador K-means
+            }
+        )
+        task_status_entry.status = 'SUCCESS'
+        task_status_entry.message = f"Pipeline K-Means concluída com sucesso. Arquivo: {output_file_instance.filename}"
+        task_status_entry.input_file = input_managed_file # Associa o arquivo de entrada
+        task_status_entry.output_file = output_file_instance
+        task_status_entry.save()
+
+        logger.info("🎉 FLUXO K-MEANS CONCLUÍDO COM SUCESSO! 🎉")
+        return {'status': 'SUCCESS', 'message': 'K-Means concluído!', 'output_file_id': output_file_instance.id}
+
+    except Exception as e:
+        logger.exception(f"Erro inesperado na pipeline K-Means {task_id}.")
+        if task_status_entry:
+            task_status_entry.status = 'FAILURE'
+            task_status_entry.message = f"Falha na pipeline K-Means: {e}"
+            task_status_entry.save()
+        else:
+            logger.error(f"Erro ANTES da criação do KMeansTaskStatus para task {task_id}: {e}")
+        raise

@@ -1,0 +1,12 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Disallow: /inicio
+Disallow: /pipelines/
+Disallow: /dashboards/
+Disallow: /csv-manager
+Disallow: /tasks-history
+
+Sitemap: https://labsus.ngrok.app/sitemap.xml

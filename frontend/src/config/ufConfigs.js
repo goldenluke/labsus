@@ -1,0 +1,32 @@
+// src/config/ufConfigs.js
+
+export const UF_CONFIGS = {
+    'AC': { nome: 'Acre', zoom: 6, center: { lat: -9.5, lon: -70.5 }, ibgePrefix: '12' },
+    'AL': { nome: 'Alagoas', zoom: 7.5, center: { lat: -9.7, lon: -36.5 }, ibgePrefix: '27' },
+    'AP': { nome: 'Amapá', zoom: 6.5, center: { lat: 0.8, lon: -51.5 }, ibgePrefix: '16' },
+    'AM': { nome: 'Amazonas', zoom: 4.5, center: { lat: -4.0, lon: -62.0 }, ibgePrefix: '13' },
+    'BA': { nome: 'Bahia', zoom: 5.5, center: { lat: -12.5, lon: -41.5 }, ibgePrefix: '29' },
+    'CE': { nome: 'Ceará', zoom: 6.5, center: { lat: -5.0, lon: -39.5 }, ibgePrefix: '23' },
+    'DF': { nome: 'Distrito Federal', zoom: 9, center: { lat: -15.7, lon: -47.8 }, ibgePrefix: '53' },
+    'ES': { nome: 'Espírito Santo', zoom: 7, center: { lat: -19.5, lon: -40.5 }, ibgePrefix: '32' },
+    'GO': { nome: 'Goiás', zoom: 6.5, center: { lat: -16.0, lon: -49.8 }, ibgePrefix: '52' },
+    'MA': { nome: 'Maranhão', zoom: 6, center: { lat: -5.0, lon: -45.0 }, ibgePrefix: '21' },
+    'MT': { nome: 'Mato Grosso', zoom: 5.5, center: { lat: -14.0, lon: -56.0 }, ibgePrefix: '51' },
+    'MS': { nome: 'Mato Grosso do Sul', zoom: 6, center: { lat: -20.0, lon: -54.0 }, ibgePrefix: '50' },
+    'MG': { nome: 'Minas Gerais', zoom: 5.5, center: { lat: -19.0, lon: -44.0 }, ibgePrefix: '31' },
+    'PA': { nome: 'Pará', zoom: 5, center: { lat: -3.0, lon: -52.0 }, ibgePrefix: '15' },
+    'PB': { nome: 'Paraíba', zoom: 7.5, center: { lat: -7.0, lon: -36.5 }, ibgePrefix: '25' },
+    'PR': { nome: 'Paraná', zoom: 6.5, center: { lat: -24.5, lon: -51.0 }, ibgePrefix: '41' },
+    'PE': { nome: 'Pernambuco', zoom: 7, center: { lat: -8.5, lon: -37.8 }, ibgePrefix: '26' },
+    'PI': { nome: 'Piauí', zoom: 6, center: { lat: -7.0, lon: -42.5 }, ibgePrefix: '22' },
+    'RJ': { nome: 'Rio de Janeiro', zoom: 7.5, center: { lat: -22.5, lon: -42.8 }, ibgePrefix: '33' },
+    'RN': { nome: 'Rio Grande do Norte', zoom: 7.5, center: { lat: -5.7, lon: -36.5 }, ibgePrefix: '24' },
+    'RS': { nome: 'Rio Grande do Sul', zoom: 6, center: { lat: -30.0, lon: -52.0 }, ibgePrefix: '43' },
+    'RO': { nome: 'Rondônia', zoom: 6, center: { lat: -11.0, lon: -63.0 }, ibgePrefix: '11' },
+    'RR': { nome: 'Roraima', zoom: 6, center: { lat: 2.0, lon: -61.5 }, ibgePrefix: '14' },
+    'SC': { nome: 'Santa Catarina', zoom: 7, center: { lat: -27.5, lon: -50.0 }, ibgePrefix: '42' },
+    'SP': { nome: 'São Paulo', zoom: 6.5, center: { lat: -23.0, lon: -48.0 }, ibgePrefix: '35' },
+    'SE': { nome: 'Sergipe', zoom: 8, center: { lat: -10.5, lon: -37.5 }, ibgePrefix: '28' },
+    'TO': { nome: 'Tocantins', zoom: 6, center: { lat: -10.0, lon: -48.0 }, ibgePrefix: '17' },
+    'BR': { nome: 'Brasil', zoom: 2.5, center: { lat: -14, lon: -50 }, ibgePrefix: '' }, // BR não tem prefixo de município específico
+};

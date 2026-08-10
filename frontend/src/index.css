@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Garante que html, body e #root ocupem 100% da altura da viewport e o scroll principal seja no body */
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Previne rolagem horizontal indesejada */
+    overflow-y: auto; /* Permite rolagem vertical no body/html */
+}
+
+/* Estilos para Scrollbar Personalizada (Aplicáveis via classe CSS) */
+/* A classe 'scrollbar-styled' será adicionada a elementos que você quer estilizar */
+.scrollbar-styled {
+    /* Para navegadores WebKit (Chrome, Safari, Edge) */
+    &::-webkit-scrollbar {
+        width: 8px; /* Largura da barra de rolagem vertical */
+        height: 8px; /* Altura da barra de rolagem horizontal (se houver) */
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #4a5568; /* Cor de fundo da área da barra (track) */
+        border-radius: 10px; /* Borda arredondada para o track */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #63b3ed; /* Cor do "polegar" (thumb) da barra de rolagem */
+        border-radius: 10px; /* Borda arredondada para o thumb */
+        border: 2px solid #4a5568; /* Espaçamento entre o thumb e o track */
+    }
+
+    /* Para Firefox */
+    scrollbar-width: thin; /* 'auto' ou 'none' ou 'thin' */
+    scrollbar-color: #63b3ed #4a5568; /* thumb color track color */
+}
+
+/* Você pode adicionar mais classes como scrollbar-dark ou scrollbar-light se quiser variações */

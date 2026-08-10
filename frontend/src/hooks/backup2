@@ -1,0 +1,335 @@
+// src/hooks/useAnalysisData.js
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
+
+// Certifique-se de que os caminhos para config estão corretos em relação a src/hooks/
+import { UF_CONFIGS } from '../config/ufConfigs';
+import { INDICADORES_MAP } from '../config/indicadores';
+
+// Dicionário de GeoJSON paths (mantido aqui para o hook)
+const GEOJSON_PATHS = { 'AC': 'geojs-12-mun', 'AL': 'geojs-27-mun', 'AP': 'geojs-16-mun', 'AM': 'geojs-13-mun', 'BA': 'geojs-29-mun', 'CE': 'geojs-23-mun', 'DF': 'geojs-53-mun', 'ES': 'geojs-32-mun', 'GO': 'geojs-52-mun', 'MA': 'geojs-21-mun', 'MT': 'geojs-51-mun', 'MS': 'geojs-50-mun', 'MG': 'geojs-31-mun', 'PA': 'geojs-15-mun', 'PB': 'geojs-25-mun', 'PR': 'geojs-41-mun', 'PE': 'geojs-26-mun', 'PI': 'geojs-22-mun', 'RJ': 'geojs-33-mun', 'RN': 'geojs-24-mun', 'RS': 'geojs-43-mun', 'RO': 'geojs-11-mun', 'RR': 'geojs-14-mun', 'SC': 'geojs-42-mun', 'SP': 'geojs-35-mun', 'SE': 'geojs-28-mun', 'TO': 'geojs-17-mun', 'BR': 'geojs-100-mun' };
+
+// ⭐ NOVO: Definição de GEOJSON_ID_KEY dentro do hook ⭐
+const GEOJSON_ID_KEY = 'id';
+
+
+const useAnalysisData = (initialUf = 'GO', initialYear = 2022, initialIndicator = 'TMI', ufParamFromUrl = null) => {
+    // -----------------------------------------------------
+    // 1. Estados gerenciados pelo Hook
+    // -----------------------------------------------------
+    const [allData, setAllData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    const [availableFiles, setAvailableFiles] = useState([]);
+    const [selectedFileId, setSelectedFileId] = useState('');
+    const [selectedUf, setSelectedUf] = useState(ufParamFromUrl ? ufParamFromUrl.toUpperCase() : initialUf);
+    const [availableIndicators, setAvailableIndicators] = useState([]);
+    const [selectedIndicator, setSelectedIndicator] = useState(initialIndicator);
+    const [selectedYear, setSelectedYear] = useState(initialYear);
+
+    const [rankingType, setRankingType] = useState('piores');
+    const [scatterX, setScatterX] = useState('TAXA_MEDICOS');
+    const [scatterY, setScatterY] = useState('TMI');
+    const [selectedMunicipality, setSelectedMunicipality] = useState(null);
+
+    const [geojson, setGeojson] = useState(null);
+    const [loadingMap, setLoadingMap] = useState(true);
+
+    // -----------------------------------------------------
+    // 2. Lógica de Busca de Arquivos (ManagedFiles)
+    // -----------------------------------------------------
+    useEffect(() => {
+        const fetchFiles = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', { headers: { 'Authorization': `Token ${token}` } });
+                setAvailableFiles(response.data);
+                if (response.data.length > 0) {
+                    setSelectedFileId(response.data[0].id.toString());
+                } else {
+                    setLoading(false);
+                    setError('Nenhum ficheiro CSV foi enviado para o seu usuário. Por favor, faça upload de um arquivo na página de gestão de ficheiros.');
+                }
+            } catch (err) {
+                console.error('Falha ao buscar a lista de ficheiros:', err);
+                setError(`Falha ao buscar a lista de ficheiros: ${err.response?.data?.detail || err.message}`);
+                setLoading(false);
+            }
+        };
+        fetchFiles();
+    }, []);
+
+    // -----------------------------------------------------
+    // 3. Lógica de Busca e Processamento de Dados CSV do ManagedFile
+    // -----------------------------------------------------
+    const fetchData = useCallback(async () => {
+        if (!selectedFileId) {
+            setAllData([]);
+            if (availableFiles.length > 0) {
+                setLoading(false);
+            }
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(`/api/files/${selectedFileId}/data/`, { headers: { 'Authorization': `Token ${token}` } });
+            const data = response.data;
+
+            const indicators = [];
+            if (data.length > 0) {
+                const firstItem = data[0];
+                const metadataColumns = [
+                    'cod_mun_ibge_6', 'municipio', 'UF', 'cod_mun_ibge_7', 'perfil', 'nome_uf'
+                ];
+
+                for (const key of Object.keys(firstItem)) {
+                    if (metadataColumns.includes(key)) {
+                        continue;
+                    }
+                    const value = String(firstItem[key]).replace(',', '.');
+                    const numericValue = parseFloat(value);
+                    if (!isNaN(numericValue)) {
+                        indicators.push(key);
+                    }
+                }
+            }
+
+            const dataNumerica = data.map(item => {
+                const newItem = { ...item };
+
+                if (newItem.ANO !== undefined && typeof newItem.ANO === 'string') {
+                    newItem.ANO = parseInt(newItem.ANO);
+                    if (isNaN(newItem.ANO)) newItem.ANO = null;
+                }
+
+                if (newItem.populacao !== undefined && typeof newItem.populacao === 'string') {
+                    newItem.populacao = parseFloat(newItem.populacao.replace(',', '.'));
+                    if (isNaN(newItem.populacao)) newItem.populacao = null;
+                }
+
+                indicators.forEach(ind => {
+                    const val = String(newItem[ind]).replace(',', '.');
+                    newItem[ind] = parseFloat(val);
+                    if (isNaN(newItem[ind])) {
+                        newItem[ind] = null;
+                    }
+                });
+                return newItem;
+            });
+            setAllData(dataNumerica);
+            setAvailableIndicators(indicators);
+
+            if (indicators.length > 0 && !selectedIndicator) {
+                setSelectedIndicator(indicators[0]);
+            } else if (indicators.length === 0) {
+                setSelectedIndicator('');
+                setError('Nenhum indicador numérico válido foi encontrado no arquivo CSV. Verifique o formato do seu arquivo.');
+            }
+
+        } catch (err) {
+            console.error('Falha ao carregar os dados do ficheiro:', err);
+            setError(`Falha ao carregar os dados do ficheiro: ${err.response?.data?.error || err.message}`);
+            setAllData([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedFileId, availableFiles.length, selectedIndicator]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // -----------------------------------------------------
+    // 4. Lógica de Definição de UF e Ano Padrão (e logs de depuração)
+    // -----------------------------------------------------
+    useEffect(() => {
+        if (allData.length > 0) {
+            const ufsInAllData = [...new Set(allData.map(item => item.UF))].sort();
+            const yearsInAllData = [...new Set(allData.map(item => item.ANO).filter(year => typeof year === 'number' && year !== null))].sort((a,b) => b-a);
+
+            if (ufsInAllData.length > 0 && (!selectedUf || !ufsInAllData.includes(selectedUf)) ) {
+                setSelectedUf(ufParamFromUrl ? ufParamFromUrl.toUpperCase() : ufsInAllData[0]);
+            }
+            if (yearsInAllData.length > 0 && (selectedYear === null || selectedYear === undefined || !yearsInAllData.includes(selectedYear)) ) {
+                setSelectedYear(yearsInAllData[0]);
+            }
+        }
+    }, [allData, selectedUf, selectedYear, ufParamFromUrl]);
+
+    // -----------------------------------------------------
+    // 5. Lógica de Carregamento de GeoJSON
+    // -----------------------------------------------------
+    useEffect(() => {
+        if (!selectedUf) {
+            setGeojson(null);
+            setLoadingMap(false);
+            return;
+        }
+        const fetchGeojson = async () => {
+            setLoadingMap(true);
+            setError('');
+            const fileName = GEOJSON_PATHS[selectedUf.toUpperCase()];
+            if (!fileName) {
+                setLoadingMap(false);
+                setError(`Nome de arquivo GeoJSON não encontrado para a UF: ${selectedUf}`);
+                console.warn(`GeoJSON filename not found for UF: ${selectedUf}`);
+                return;
+            }
+
+            const fileUrl = `/geojson_uf/${fileName}.json`;
+
+            try {
+                const response = await fetch(fileUrl);
+                if (!response.ok) {
+                    throw new Error(`Erro de rede ou arquivo não encontrado: ${response.status} ${response.statusText}`);
+                }
+                const jsonData = await response.json();
+                setGeojson(jsonData);
+            } catch (error) {
+                console.error(`Erro ao buscar GeoJSON para ${selectedUf} do diretório público:`, error);
+                setGeojson(null);
+                setError(`Não foi possível carregar o mapa GeoJSON para ${selectedUf}. Verifique a conexão ou os arquivos GeoJSON no frontend (public/geojson_uf/).`);
+            } finally {
+                setLoadingMap(false);
+            }
+        };
+        fetchGeojson();
+    }, [selectedUf]);
+
+    // -----------------------------------------------------
+    // 6. Dados Filtrados e Calculados (Disponíveis para o Componente Consumidor)
+    // -----------------------------------------------------
+    const ufDataFilteredByYear = useMemo(() => {
+        if (!selectedUf || !allData || allData.length === 0 || selectedYear === null || selectedYear === undefined) {
+            return [];
+        }
+        const ufConfigForFilter = UF_CONFIGS[selectedUf];
+        let filteredData = [];
+        if (ufConfigForFilter && ufConfigForFilter.ibgePrefix) {
+            filteredData = allData.filter(item => String(item.cod_mun_ibge_7).startsWith(ufConfigForFilter.ibgePrefix));
+        } else {
+            filteredData = allData.filter(item => item.UF === selectedUf);
+        }
+        return filteredData.filter(item => item.ANO === selectedYear);
+    }, [allData, selectedUf, selectedYear]);
+
+    const availableYears = useMemo(() => {
+        const years = new Set(allData.map(item => item.ANO).filter(year => typeof year === 'number' && year !== null));
+        return Array.from(years).sort((a,b) => b-a);
+    }, [allData]);
+
+    const availableUfs = useMemo(() => { // ✨ CORREÇÃO AQUI: availableUfs é o resultado direto deste useMemo
+        const ufs = [...new Set(allData.map(item => item.UF))].sort();
+        return ufs;
+    }, [allData]);
+
+
+    const ufMapConfig = UF_CONFIGS[selectedUf] || {};
+
+    const mapChartData = useMemo(() => {
+        if (!geojson || !ufDataFilteredByYear || ufDataFilteredByYear.length === 0 || !selectedIndicator) return null;
+        const municipalityDataMap = new Map();
+        ufDataFilteredByYear.forEach(item => {
+            municipalityDataMap.set(String(item.cod_mun_ibge_7), item[selectedIndicator]);
+        });
+        const locations = [];
+        const zValues = [];
+        const textValues = [];
+        geojson.features.forEach(feature => {
+            const geoId = String(feature.properties[GEOJSON_ID_KEY]);
+            const indicatorValue = municipalityDataMap.get(geoId);
+            const municipioName = feature.properties.nome;
+            if (indicatorValue !== undefined && indicatorValue !== null) {
+                locations.push(geoId);
+                zValues.push(indicatorValue);
+                const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+                textValues.push(`${municipioName}<br>${indicatorLabel}: ${indicatorValue}`);
+            }
+        });
+        if (locations.length === 0) {
+            console.warn("Nenhum dado correspondente encontrado para o indicador e UF selecionados no GeoJSON.");
+            return null;
+        }
+        return [{
+            type: 'choropleth', geojson: geojson, locations: locations, z: zValues, text: textValues,
+            hoverinfo: 'text', featureidkey: `properties.${GEOJSON_ID_KEY}`, colorscale: 'Viridis',
+            colorbar: { title: { text: INDICADORES_MAP[selectedIndicator] || selectedIndicator, side: 'right' }, len: 0.75, x: 0.95, y: 0.5 },
+            marker: { line: { color: 'white', width: 0.5 } },
+        }];
+    }, [ufDataFilteredByYear, selectedIndicator, geojson]);
+
+    const mapTitle = useMemo(() => {
+        const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+        const ufName = ufMapConfig.nome || selectedUf.toUpperCase();
+        return `Distribuição de ${indicatorLabel} em ${ufName} (${selectedYear})`;
+    }, [selectedIndicator, ufMapConfig, selectedUf, selectedYear]);
+
+    // Dados para Série Histórica (filtrados por UF, todos os anos)
+    const ufDataAllYears = useMemo(() => { // ✨ CORREÇÃO AQUI: Definindo ufDataAllYears corretamente
+        if (!selectedUf || !allData || allData.length === 0) return [];
+        const ufConfigForFilter = UF_CONFIGS[selectedUf];
+        if (ufConfigForFilter && ufConfigForFilter.ibgePrefix) {
+            return allData.filter(item => String(item.cod_mun_ibge_7).startsWith(ufConfigForFilter.ibgePrefix));
+        }
+        return allData.filter(item => item.UF === selectedUf);
+    }, [allData, selectedUf]);
+
+
+    const municipalitiesForHistoricalComparison = useMemo(() => {
+        if (ufDataAllYears.length > 0) { // Usar ufDataAllYears aqui para pegar dados de qualquer ano
+            const uniqueMuns = [];
+            const seenMunCodes = new Set();
+            for (const item of ufDataAllYears) {
+                if (!seenMunCodes.has(item.cod_mun_ibge_7)) {
+                    uniqueMuns.push({
+                        cod_mun_ibge_7: item.cod_mun_ibge_7,
+                        nome_mun: item.nome_mun || item.municipio // Fallback para 'municipio'
+                    });
+                    seenMunCodes.add(item.cod_mun_ibge_7);
+                }
+                if (uniqueMuns.length >= 2) break;
+            }
+            return uniqueMuns;
+        }
+        return [];
+    }, [ufDataAllYears]); // Depende de ufDataAllYears
+
+
+    // -----------------------------------------------------
+    // 7. Retorno do Hook: Expõe os estados e funções necessários
+    // -----------------------------------------------------
+    return {
+        // Dados e Estados de Carregamento
+        allData, loading, error,
+
+        // Controles de Arquivo
+        availableFiles, selectedFileId, setSelectedFileId,
+
+        // Filtros Atuais (e seus setters)
+        selectedUf, setSelectedUf, selectedYear, setSelectedYear,
+        selectedIndicator, setSelectedIndicator,
+        rankingType, setRankingType, scatterX, setScatterX, scatterY, setScatterY,
+        selectedMunicipality, setSelectedMunicipality,
+
+        // Dados Derivados para Dropdowns
+        availableUfs, // Agora disponível diretamente
+        availableYears,
+        availableIndicators,
+
+        // Dados Derivados para Gráficos
+        ufDataFilteredByYear,       // Dados filtrados por UF e Ano (para Histograma, Ranking, Dispersão, Mapa)
+        ufDataAllYears,             // Expõe os dados de todos os anos para a UF para o histórico
+        ufMapConfig, geojson, loadingMap,
+        mapChartData, mapTitle,
+        municipalitiesForHistoricalComparison,
+    };
+};
+
+export default useAnalysisData;

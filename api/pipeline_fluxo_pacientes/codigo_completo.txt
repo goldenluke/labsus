@@ -1,0 +1,487 @@
+# === Início do arquivo: ./__init__.py ===
+
+
+
+# === Fim do arquivo: ./__init__.py ===
+
+# === Início do arquivo: ./admin.py ===
+
+from django.contrib import admin
+from .models import FluxoPacientesTaskStatus
+
+@admin.register(FluxoPacientesTaskStatus)
+class FluxoPacientesTaskStatusAdmin(admin.ModelAdmin):
+    # ⭐ REMOVIDO 'diagnostico_nome' ⭐
+    list_display = ('task_id', 'user', 'status', 'created_at')
+    list_filter = ('status', 'user')
+    search_fields = ('task_id', 'user__username', 'diagnostico_cids')
+
+
+# === Fim do arquivo: ./admin.py ===
+
+# === Início do arquivo: ./apps.py ===
+
+from django.apps import AppConfig
+
+class PipelineFluxoPacientesConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    # ⭐ GARANTA QUE O 'name' SEJA O CAMINHO COMPLETO DA APP ⭐
+    name = 'api.pipeline_fluxo_pacientes'
+    label = 'pipeline_fluxo_pacientes'
+
+
+# === Fim do arquivo: ./apps.py ===
+
+# === Início do arquivo: ./models.py ===
+
+from django.db import models
+from django.conf import settings
+import uuid
+
+class FluxoPacientesTaskStatus(models.Model):
+    task_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=20, default='PENDING', #...
+    )
+
+    # Parâmetros da análise
+    ufs = models.JSONField(default=list)
+    anos = models.JSONField(default=list)
+    diagnostico_cids = models.JSONField(default=list)
+    # ⭐ CAMPO REMOVIDO DAQUI ⭐
+    # diagnostico_nome = models.CharField(max_length=255)
+    min_pacientes_fluxo = models.IntegerField(default=5)
+
+    output_file = models.ForeignKey('api.ManagedFile', on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='fluxo_pacientes_tasks')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    message = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        # ⭐ ATUALIZADO PARA NÃO USAR MAIS O NOME DO DIAGNÓSTICO ⭐
+        return f"Fluxo de Pacientes ({self.task_id})"
+
+
+# === Fim do arquivo: ./models.py ===
+
+# === Início do arquivo: ./tasks.py ===
+
+from celery import shared_task
+from django.conf import settings
+from django.apps import apps
+import pandas as pd
+from pathlib import Path
+import logging
+import os
+import re
+import unicodedata
+
+from pysus.online_data.SIH import download as download_sih
+from api.models import FileType
+
+logger = logging.getLogger(__name__)
+
+# Mapeamento de Código IBGE do Estado para a Sigla da UF
+UF_CODE_TO_ABBREVIATION = {
+    '12': 'AC', '27': 'AL', '16': 'AP', '13': 'AM', '29': 'BA', '23': 'CE',
+    '53': 'DF', '32': 'ES', '52': 'GO', '21': 'MA', '51': 'MT', '50': 'MS',
+    '31': 'MG', '15': 'PA', '25': 'PB', '41': 'PR', '26': 'PE', '22': 'PI',
+    '33': 'RJ', '24': 'RN', '43': 'RS', '11': 'RO', '14': 'RR', '42': 'SC',
+    '35': 'SP', '28': 'SE', '17': 'TO'
+}
+
+def secure_filename(filename):
+    """
+    Sanitiza um nome de arquivo para ser seguro, mas permite espaços.
+    - Normaliza para remover acentos.
+    - Remove caracteres perigosos ou inválidos em sistemas de ficheiros.
+    - Mantém espaços.
+    """
+    # Normaliza para o formato NKFD para separar caracteres de acentos e remove-os
+    filename = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
+
+    # Remove caracteres que são inválidos na maioria dos sistemas de ficheiros ou perigosos (path traversal)
+    filename = re.sub(r'[\\/*?:"<>|]', '', filename)
+
+    # Remove pontos no início do nome do ficheiro para evitar ficheiros ocultos
+    if filename.startswith('.'):
+        filename = filename[1:]
+
+
+
+    return filename.strip() # Remove espaços no início/fim
+
+def run_fluxo_analysis_logic(ufs, anos, diagnostico_cids, min_pacientes_fluxo, task_instance=None):
+    """
+    Executa a lógica principal da análise de fluxo de pacientes e retorna um DataFrame com os resultados.
+    """
+    if task_instance:
+        task_instance.update_state(state='PROGRESS', meta={'progress': 5, 'message': 'Carregando dados de referência...'})
+
+    caminho_municipios_csv = settings.BASE_DIR / 'referencia' / 'espaciais' / 'csv' / 'municipios.csv'
+    try:
+        df_municipios = pd.read_csv(caminho_municipios_csv, dtype={'codigo_ibge': str, 'codigo_uf': str})
+    except FileNotFoundError as e:
+        raise Exception(f"Arquivo de referência de municípios não encontrado: {e}")
+
+    if task_instance:
+        task_instance.update_state(state='PROGRESS', meta={'progress': 15, 'message': 'Baixando dados do SIH...'})
+
+    df_list = []
+    for uf in ufs:
+        for ano in anos:
+            try:
+                downloaded_files = download_sih(states=uf, years=ano, months=list(range(1, 13)), groups='RD')
+                df_anual_uf = pd.DataFrame()
+
+                if isinstance(downloaded_files, list):
+                    monthly_dfs = [f.to_dataframe() for f in downloaded_files if hasattr(f, 'to_dataframe')]
+                    if monthly_dfs:
+                        df_anual_uf = pd.concat(monthly_dfs, ignore_index=True)
+                elif hasattr(downloaded_files, 'to_dataframe'):
+                    df_anual_uf = downloaded_files.to_dataframe()
+
+                if not df_anual_uf.empty:
+                    df_list.append(df_anual_uf)
+            except Exception as e:
+                logger.warning(f"Não foi possível baixar ou processar dados para {uf}/{ano}: {e}")
+
+    if not df_list: raise Exception("Nenhum dado do SIH pôde ser baixado.")
+    df_total = pd.concat(df_list, ignore_index=True)
+
+    if task_instance:
+        task_instance.update_state(state='PROGRESS', meta={'progress': 60, 'message': 'Processando fluxos...'})
+
+    df_diagnostico = df_total[df_total['DIAG_PRINC'].str.startswith(tuple(diagnostico_cids))].copy()
+    if df_diagnostico.empty: raise Exception("Nenhum registro para os CIDs especificados foi encontrado.")
+
+    # CORREÇÃO: Removida a coluna 'VAL_TOT' que estava com formato inválido
+    df_fluxo = df_diagnostico[['MUNIC_RES', 'MUNIC_MOV', 'N_AIH']].dropna()
+    df_fluxo['MUNIC_RES'] = df_fluxo['MUNIC_RES'].astype(str).str[:6]
+    df_fluxo['MUNIC_MOV'] = df_fluxo['MUNIC_MOV'].astype(str).str[:6]
+    df_fluxo = df_fluxo[df_fluxo['MUNIC_RES'] != df_fluxo['MUNIC_MOV']]
+
+    # CORREÇÃO: Agrupamento agora conta apenas os pacientes (N_AIH)
+    df_fluxo_agg = df_fluxo.groupby(['MUNIC_RES', 'MUNIC_MOV']).agg(
+        N_PACIENTES=('N_AIH', 'nunique')
+    ).reset_index()
+
+    df_fluxo_agg = df_fluxo_agg[df_fluxo_agg['N_PACIENTES'] >= min_pacientes_fluxo]
+
+    if df_fluxo_agg.empty: raise Exception(f"Nenhuma rota de fluxo com no mínimo {min_pacientes_fluxo} pacientes encontrada.")
+
+    df_coords = df_municipios[['codigo_ibge', 'latitude', 'longitude', 'nome', 'codigo_uf']].copy()
+    df_coords['codigo_ibge'] = df_coords['codigo_ibge'].str[:6]
+    df_coords['uf_sigla'] = df_coords['codigo_uf'].map(UF_CODE_TO_ABBREVIATION)
+
+    df_final = pd.merge(df_fluxo_agg, df_coords, left_on='MUNIC_RES', right_on='codigo_ibge', how='inner').rename(columns={'latitude': 'lat_origem', 'longitude': 'lon_origem', 'nome': 'municipio_origem', 'uf_sigla': 'uf_origem'}).drop(['codigo_ibge', 'codigo_uf'], axis=1)
+    df_final = pd.merge(df_final, df_coords, left_on='MUNIC_MOV', right_on='codigo_ibge', how='inner').rename(columns={'latitude': 'lat_destino', 'longitude': 'lon_destino', 'nome': 'municipio_destino', 'uf_sigla': 'uf_destino'}).drop(['codigo_ibge', 'codigo_uf'], axis=1)
+
+    return df_final
+
+@shared_task(bind=True)
+def run_fluxo_pacientes_pipeline(self, user_id, ufs, anos, diagnostico_cids, min_pacientes_fluxo, output_filename=None):
+    ManagedFile = apps.get_model('api', 'ManagedFile')
+    User = apps.get_model(settings.AUTH_USER_MODEL)
+    FluxoPacientesTaskStatus = apps.get_model('pipeline_fluxo_pacientes', 'FluxoPacientesTaskStatus')
+
+    task_id = self.request.id
+    user = User.objects.get(id=user_id) if user_id else None
+
+    params_to_save = {
+        'ufs': ufs, 'anos': anos, 'diagnostico_cids': diagnostico_cids,
+        'min_pacientes_fluxo': min_pacientes_fluxo
+    }
+
+    try:
+        task_status_entry, _ = FluxoPacientesTaskStatus.objects.get_or_create(
+            task_id=task_id, defaults={'user': user, 'status': 'STARTED', **params_to_save, 'message': 'Pipeline iniciada.'}
+        )
+
+        df_results = run_fluxo_analysis_logic(
+            ufs=ufs, anos=anos, diagnostico_cids=diagnostico_cids,
+            min_pacientes_fluxo=min_pacientes_fluxo, task_instance=self
+        )
+
+        self.update_state(state='PROGRESS', meta={'progress': 95, 'message': 'Salvando arquivo de resultado...'})
+
+        cid_based_name = '-'.join(diagnostico_cids)
+        final_filename = output_filename or f"fluxo_{cid_based_name.lower()}_{task_id[:8]}.csv"
+        final_filename = secure_filename(final_filename)
+
+        output_dir = Path(settings.MEDIA_ROOT) / "processed_data" / "fluxo_pacientes" / str(task_id)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        csv_path = output_dir / final_filename
+        df_results.to_csv(csv_path, index=False, sep=';', decimal=',')
+
+        desc = (f"UFs: {', '.join(ufs)}. Anos: {', '.join(map(str, anos))}. "
+                f"CIDs: {', '.join(diagnostico_cids)}. "
+                f"Min. Pacientes: {min_pacientes_fluxo}.")
+
+        output_file = ManagedFile.objects.create(
+            uploader=user, file=os.path.relpath(csv_path, settings.MEDIA_ROOT),
+            filename=final_filename, description=desc, file_type=FileType.PATIENT_FLOW
+        )
+
+        task_status_entry.status = 'SUCCESS'
+        task_status_entry.message = "Análise de fluxo concluída com sucesso."
+        task_status_entry.output_file = output_file
+        task_status_entry.save()
+
+        return {'status': 'SUCCESS', 'output_file_id': output_file.id}
+
+    except Exception as e:
+        logger.exception(f"Falha na pipeline de fluxo de pacientes {task_id}.")
+        if 'task_status_entry' in locals() and task_status_entry:
+            task_status_entry.status = 'FAILURE'
+            task_status_entry.message = str(e)
+            task_status_entry.save()
+        raise
+
+
+# === Fim do arquivo: ./tasks.py ===
+
+# === Início do arquivo: ./tests.py ===
+
+from django.test import TestCase
+
+# Create your tests here.
+
+
+# === Fim do arquivo: ./tests.py ===
+
+# === Início do arquivo: ./urls.py ===
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('trigger/', views.trigger_fluxo_pacientes_pipeline, name='fluxo-pacientes-trigger'),
+    path('tasks/', views.FluxoPacientesTaskListView.as_view(), name='fluxo-pacientes-task-list'),
+    path('tasks/<uuid:task_id>/status/', views.get_fluxo_pacientes_task_status, name='fluxo-pacientes-task-status'),
+]
+
+
+# === Fim do arquivo: ./urls.py ===
+
+# === Início do arquivo: ./views.py ===
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status, generics
+import logging
+from celery.result import AsyncResult # ⭐ 1. Adicione esta importação
+
+from .tasks import run_fluxo_pacientes_pipeline
+from .models import FluxoPacientesTaskStatus
+from api.serializers import FluxoPacientesTaskStatusSerializer
+
+logger = logging.getLogger(__name__)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def trigger_fluxo_pacientes_pipeline(request):
+    data = request.data
+    user_id = request.user.id
+
+    required_params = ['ufs', 'anos', 'diagnostico_cids', 'min_pacientes_fluxo']
+    if not all(k in data for k in required_params):
+        return Response({'error': 'Parâmetros insuficientes.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        task = run_fluxo_pacientes_pipeline.delay(
+            user_id=user_id,
+            ufs=data['ufs'],
+            anos=data['anos'],
+            diagnostico_cids=data['diagnostico_cids'],
+            min_pacientes_fluxo=data['min_pacientes_fluxo'],
+            output_filename=data.get('output_filename')
+        )
+        return Response({'task_id': task.id}, status=status.HTTP_202_ACCEPTED)
+    except Exception as e:
+        logger.exception("Erro ao disparar a pipeline de fluxo de pacientes.")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ⭐ 2. ADICIONE ESTA NOVA VIEW COMPLETA ⭐
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_fluxo_pacientes_task_status(request, task_id):
+    """
+    Verifica e retorna o status de uma tarefa Celery de fluxo de pacientes.
+    """
+    task_id_str = str(task_id)
+    result = AsyncResult(task_id_str)
+    response_data = {
+        'task_id': task_id_str,
+        'status': result.status,
+    }
+
+    if result.status == 'PROGRESS':
+        response_data['progress'] = result.info.get('progress', 0)
+        response_data['message'] = result.info.get('message', 'Em progresso...')
+    elif result.status == 'SUCCESS':
+        response_data['result'] = result.result
+        if result.result and 'output_file_id' in result.result:
+            response_data['output_file_id'] = result.result['output_file_id']
+    elif result.status == 'FAILURE':
+        response_data['error'] = str(result.result)
+    elif result.status == 'REVOKED':
+        response_data['message'] = 'Tarefa foi revogada.'
+
+    return Response(response_data)
+
+
+class FluxoPacientesTaskListView(generics.ListAPIView):
+    serializer_class = FluxoPacientesTaskStatusSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return FluxoPacientesTaskStatus.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+# === Fim do arquivo: ./views.py ===
+
+# === Início do arquivo: ./migrations/0001_initial.py ===
+
+# Generated by Django 5.2.4 on 2025-07-26 21:42
+
+import django.db.models.deletion
+import uuid
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ('api', '0006_alter_managedfile_file_type'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='FluxoPacientesTaskStatus',
+            fields=[
+                ('task_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('status', models.CharField(choices=[('PENDING', 'Pendente'), ('STARTED', 'Iniciada'), ('PROGRESS', 'Em Progresso'), ('SUCCESS', 'Sucesso'), ('FAILURE', 'Falha')], default='PENDING', max_length=20)),
+                ('ufs', models.JSONField(default=list)),
+                ('anos', models.JSONField(default=list)),
+                ('diagnostico_cids', models.JSONField(default=list)),
+                ('diagnostico_nome', models.CharField(max_length=255)),
+                ('min_pacientes_fluxo', models.IntegerField(default=5)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('message', models.TextField(blank=True, null=True)),
+                ('output_file', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fluxo_pacientes_tasks', to='api.managedfile')),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+    ]
+
+
+# === Fim do arquivo: ./migrations/0001_initial.py ===
+
+# === Início do arquivo: ./migrations/0002_remove_fluxopacientestaskstatus_diagnostico_nome_and_more.py ===
+
+# Generated by Django 5.2.4 on 2025-07-26 23:20
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('pipeline_fluxo_pacientes', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.RemoveField(
+            model_name='fluxopacientestaskstatus',
+            name='diagnostico_nome',
+        ),
+        migrations.AlterField(
+            model_name='fluxopacientestaskstatus',
+            name='status',
+            field=models.CharField(default='PENDING', max_length=20),
+        ),
+    ]
+
+
+# === Fim do arquivo: ./migrations/0002_remove_fluxopacientestaskstatus_diagnostico_nome_and_more.py ===
+
+# === Início do arquivo: ./migrations/0003_fluxopacientestaskstatus_ai_interpretation_and_more.py ===
+
+# Generated by Django 5.2.8 on 2026-03-19 21:22
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('pipeline_fluxo_pacientes', '0002_remove_fluxopacientestaskstatus_diagnostico_nome_and_more'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='fluxopacientestaskstatus',
+            name='ai_interpretation',
+            field=models.TextField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name='fluxopacientestaskstatus',
+            name='regime_detectado',
+            field=models.CharField(blank=True, max_length=50, null=True),
+        ),
+        migrations.AddField(
+            model_name='fluxopacientestaskstatus',
+            name='resilience_score',
+            field=models.FloatField(blank=True, null=True),
+        ),
+    ]
+
+
+# === Fim do arquivo: ./migrations/0003_fluxopacientestaskstatus_ai_interpretation_and_more.py ===
+
+# === Início do arquivo: ./migrations/0004_remove_fluxopacientestaskstatus_ai_interpretation_and_more.py ===
+
+# Generated by Django 5.2.8 on 2026-03-20 23:27
+
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('pipeline_fluxo_pacientes', '0003_fluxopacientestaskstatus_ai_interpretation_and_more'),
+    ]
+
+    operations = [
+        migrations.RemoveField(
+            model_name='fluxopacientestaskstatus',
+            name='ai_interpretation',
+        ),
+        migrations.RemoveField(
+            model_name='fluxopacientestaskstatus',
+            name='regime_detectado',
+        ),
+        migrations.RemoveField(
+            model_name='fluxopacientestaskstatus',
+            name='resilience_score',
+        ),
+    ]
+
+
+# === Fim do arquivo: ./migrations/0004_remove_fluxopacientestaskstatus_ai_interpretation_and_more.py ===
+
+# === Início do arquivo: ./migrations/__init__.py ===
+
+
+
+# === Fim do arquivo: ./migrations/__init__.py ===
+

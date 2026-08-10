@@ -1,0 +1,309 @@
+# api/pipeline_indicadores/tasks.py
+
+from celery import shared_task
+from django.conf import settings
+from django.apps import apps
+import pandas as pd
+import os
+import logging
+from pathlib import Path
+import importlib.util
+import sys
+import traceback
+from functools import reduce
+
+
+logger = logging.getLogger(__name__)
+
+# DEFINITIVO: A RAIZ GERAL DO PROJETO É settings.BASE_DIR.parent.parent
+PROJECT_ROOT_GENERAL = Path("/home/lucas/cognisaude")
+
+
+# Adicionar a pasta 'src' ao sys.path. Esta é a raiz dos pacotes 'utils' e 'features'.
+SRC_DIR_IN_PROJECT = PROJECT_ROOT_GENERAL / "src"
+if str(SRC_DIR_IN_PROJECT) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR_IN_PROJECT))
+
+
+try:
+    from src.utils.dataloaders import filtrar_populacao
+except ImportError as e:
+    logger.error(f"ERRO: Não foi possível importar 'filtrar_populacao' de 'src.utils.dataloaders'. Verifique se 'src/__init__.py' e 'src/utils/__init__.py' existem e o caminho. Erro: {e}")
+    raise
+
+
+# --- Funções auxiliares (inalteradas) ---
+
+def discover_feature_functions(features_base_dir: Path) -> dict:
+    feature_functions = {}
+
+    logger.info(f"Procurando por módulos de feature em: {features_base_dir}")
+
+    if not features_base_dir.is_dir():
+        logger.error(f"DIRETÓRIO DE FEATURES NÃO ENCONTRADO: {features_base_dir}. Certifique-se de que a pasta 'src/features' existe.")
+        return {}
+
+    found_files = list(features_base_dir.glob('*.py'))
+    logger.info(f"Arquivos .py encontrados em {features_base_dir}: {[f.name for f in found_files if not f.name.startswith('__init__')]}")
+
+
+    for f in found_files:
+        if f.name.startswith(('__init__', '.')): # Ignora __init__.py e arquivos ocultos
+            continue
+
+        module_name = f.stem
+
+        spec = importlib.util.spec_from_file_location(f"src.features.{module_name}", f)
+        if spec is None:
+            logger.warning(f"Não foi possível criar especificação para o módulo {f}. Pulando. (Isso pode indicar um arquivo malformado ou não importável).")
+            continue
+
+        try:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[f"src.features.{module_name}"] = module
+            spec.loader.exec_module(module)
+
+            if hasattr(module, 'processar_dados'):
+                feature_functions[module_name] = getattr(module, 'processar_dados')
+                logger.info(f" -> SUCESSO: Módulo de feature '{module_name}' carregado. Função 'processar_dados' encontrada.")
+            else:
+                logger.warning(f"AVISO: Módulo '{module_name}' carregado, mas NÃO possui uma função 'processar_dados'.")
+        except ImportError as ie:
+            logger.error(f"ERRO DE IMPORTAÇÃO (ImportError): Módulo '{f.name}' ({f}) não pode ser importado. Certifique-se de que '__init__.py' existe em 'src/' e 'src/features/'. Erro: {ie}", exc_info=True)
+        except Exception as e:
+            logger.error(f"ERRO GERAL: Ao carregar/executar '{f.name}' (módulo '{module_name}'). Isso pode ser um erro de sintaxe no arquivo de feature. Erro: {e}", exc_info=True)
+
+    if not feature_functions:
+        logger.error(f"NENHUMA FUNÇÃO 'processar_dados' ENCONTRADA COM SUCESSO em '{features_base_dir}' após tentativas de importação.")
+    return feature_functions
+
+
+# --- Dicionário de Mapeamento de Indicador para Módulo de Feature ---
+INDICADOR_TO_FEATURE_MODULE = {
+    'TAXA_INCIDENCIA_TB': 'indicadores_tuberculose',
+    'TAXA_MORT_PREM_DCNT': 'mortalidade_prematura_dcnt',
+    'PROP_MAL_DEFINIDAS': 'causas_mal_definidas',
+    'TAXA_EQUIPES_ESF': 'equipes_esf_taxa',
+    'TMI': 'mortalidade_infantil',
+    'TAXA_INCID_CHIKUNGUNYA': 'incidencia_arboviroses',
+    'TAXA_INCID_ZIKA': 'incidencia_arboviroses',
+    'TAXA_INCID_DENGUE': 'incidencia_arboviroses',
+    'PROP_CESAREOS': 'partos_cesareos',
+    'PROP_MAE_ADOL': 'maes_adolescentes',
+    'TAXA_INTERNACAO_GERAL': 'internacoes_gerais',
+    'DOENCAS_CRONICAS': 'doencas_cronicas',
+    'TAXA_MEDICOS': 'medicos_por_mil',
+    'TAXA_DETECCAO_HANSENIASE': 'hanseniase',
+    'COBERTURA_PRENATAL': 'pre_natal',
+    'TAXA_MORT_CIRCULATORIO': 'mortalidade_causas_especificas',
+    'TAXA_MORT_NEOPLASIAS': 'mortalidade_causas_especificas',
+    'TAXA_MORT_RESPIRATORIAS': 'mortalidade_causas_especificas',
+    'TAXA_MORT_DIABETES': 'mortalidade_causas_especificas',
+    'TAXA_MORT_EXTERNAS': 'mortalidade_causas_especificas',
+    'TAXA_MORT_COVID19': 'mortalidade_causas_especificas',
+}
+
+
+# --- Tasks Celery ---
+
+@shared_task
+def run_pipeline_indicadores_task(ufs, anos, arboviroses, mortalidade, indicadores):
+    logger.info(f"Executando pipeline de indicadores: ufs={ufs}, anos={anos}")
+    return "Pipeline de indicadores executado com sucesso"
+
+
+@shared_task(bind=True)
+def run_integracao_pipeline(self, ufs, anos, arboviroses, mortalidade, indicadores=None, output_csv_filename=None, pop_csv_path=None, user_id=None):
+    ManagedFile = apps.get_model('api', 'ManagedFile')
+    User = apps.get_model(settings.AUTH_USER_MODEL)
+    IntegracaoTaskStatus = apps.get_model('pipeline_indicadores', 'IntegracaoTaskStatus')
+
+    task_id = self.request.id
+    user = User.objects.get(id=user_id) if user_id else None
+
+    # NOVO: Inicializa task_status_entry a None antes do bloco try
+    task_status_entry = None
+    # ⭐ CORREÇÃO AQUI: Definir ARQUIVO_POP e ARQUIVO_INDICADORES_INTEGRADOS no início da função ⭐
+    # Isso garante que existam mesmo se um erro ocorrer antes do bloco `try` principal.
+    if pop_csv_path is None:
+        ARQUIVO_POP = PROJECT_ROOT_GENERAL / "referencia" / "populacao" / "populacao_estimada_completa_spline.csv"
+    else:
+        ARQUIVO_POP = Path(pop_csv_path)
+
+    if output_csv_filename is None:
+        output_csv_filename = f"indicadores_integrados_{task_id}.csv"
+    ARQUIVO_INDICADORES_INTEGRADOS = Path(settings.MEDIA_ROOT) / "processed_data" / "integracao" / output_csv_filename
+
+
+    try:
+        task_status_entry, created = IntegracaoTaskStatus.objects.get_or_create(
+            task_id=task_id,
+            defaults={
+                'user': user,
+                'status': 'STARTED',
+                'input_files': [],
+                'message': 'Pipeline de integração iniciada.'
+            }
+        )
+        if not created:
+            task_status_entry.status = 'STARTED'
+            task_status_entry.message = 'Pipeline de integração reiniciada.'
+            task_status_entry.save()
+
+        logger.info(f"Caminho do arquivo de população (Task): '{ARQUIVO_POP}'")
+
+        if not ARQUIVO_POP.exists():
+            raise Exception(f"Arquivo de população não encontrado em '{ARQUIVO_POP}'. Verifique o caminho absoluto e as permissões do Celery Worker.")
+        logger.info("✅ Arquivo de população validado.")
+
+        # --- ETAPA DE DESCOBERTA DE FEATURES ---
+        features_dir_real = PROJECT_ROOT_GENERAL / "src" / "features"
+        funcoes_disponiveis = discover_feature_functions(features_dir_real)
+
+        if not funcoes_disponiveis:
+            raise Exception("Nenhuma função de feature encontrada na pasta 'src/features/'. Verifique os arquivos Python e a função 'processar_dados'.")
+
+        logger.info("--- Configuração Inicial ---")
+        logger.info(f"🚀 INICIANDO O PIPELINE DE INTEGRAÇÃO DE INDICADORES (Task: {task_id}) 🚀")
+        logger.info(f"  Estados Alvo: {ufs}")
+        logger.info(f"  Anos Alvo:    {anos}")
+
+        indicadores_a_processar = indicadores if indicadores else list(funcoes_disponiveis.keys())
+        logger.info(f"  Indicadores a processar: {indicadores_a_processar}")
+
+        # Lógica para mapear indicadores do frontend para nomes de módulos de feature
+        indicadores_a_processar_modulos = []
+        if indicadores and isinstance(indicadores, list) and len(indicadores) > 0:
+            for ind_frontend_name in indicadores:
+                module_name = INDICADOR_TO_FEATURE_MODULE.get(ind_frontend_name)
+                if module_name:
+                    if module_name in funcoes_disponiveis:
+                        indicadores_a_processar_modulos.append(module_name)
+                    else:
+                        logger.warning(f"Aviso: Módulo '{module_name}' (para indicador '{ind_frontend_name}') não foi descoberto/carregado. Pulando.")
+                else:
+                    logger.warning(f"Aviso: Indicador '{ind_frontend_name}' solicitado do frontend não tem mapeamento em 'INDICADOR_TO_FEATURE_MODULE'. Pulando.")
+
+            if not indicadores_a_processar_modulos:
+                raise Exception("Nenhum indicador selecionado no frontend corresponde a um módulo de feature disponível para processamento. Verifique a seleção e o mapeamento 'INDICADOR_TO_FEATURE_MODULE'.")
+        else:
+            indicadores_a_processar_modulos = list(funcoes_disponiveis.keys())
+
+        logger.info(f"  Indicadores a processar (módulos): {indicadores_a_processar_modulos}")
+
+
+        # --- ETAPA 1: Criar o DataFrame Base ---
+        self.update_state(state='PROGRESS', meta={'progress': 5, 'message': 'Criando DataFrame base com população...'})
+        logger.info("--- ETAPA 1: Criando DataFrame base com população e chaves ---")
+        df_base_list = []
+        for uf_code in ufs:
+            for ano_val in anos:
+                df_temp = filtrar_populacao(arquivo_populacao=ARQUIVO_POP, uf=uf_code, ano=ano_val)
+                if df_temp is not None:
+                    df_base_list.append(df_temp.reset_index())
+
+        if not df_base_list:
+            raise Exception("Não foi possível carregar dados de população para nenhuma combinação de UF/Ano. Verifique arquivo de população e filtros.")
+
+        df_final = pd.concat(df_base_list, ignore_index=True)
+        chaves_base = ['cod_mun_ibge_6', 'ANO', 'UF', 'municipio', 'cod_mun_ibge_7', 'populacao']
+        df_final = df_final[[col for col in chaves_base if col in df_final.columns]].copy()
+        logger.info(f"✅ DataFrame base criado com {len(df_final)} registros.")
+
+        # --- ETAPA 2: Calcular e Mesclar Indicadores ---
+        self.update_state(state='PROGRESS', meta={'progress': 20, 'message': 'Calculando e mesclando indicadores...'})
+        logger.info("--- ETAPA 2: Calculando e mesclando indicadores ---")
+
+        total_features = len(indicadores_a_processar_modulos)
+        if total_features == 0:
+            raise Exception("Nenhum indicador de feature válido para processar. Verifique a seleção ou os módulos disponíveis.")
+
+        # Inicializa df_final como um DataFrame vazio para os merges subsequentes,
+        # caso a primeira feature não inicie o df_final
+        initial_merge_df_final = df_final.copy() # Copia o DataFrame base
+
+        for i, nome_indicador_modulo in enumerate(indicadores_a_processar_modulos):
+            self.update_state(state='PROGRESS', meta={'progress': 20 + int((i / total_features) * 60), 'message': f'Processando indicador: {nome_indicador_modulo}'})
+            logger.info(f"-> Processando feature: {nome_indicador_modulo}...")
+
+            if nome_indicador_modulo in funcoes_disponiveis:
+                funcao_a_chamar = funcoes_disponiveis[nome_indicador_modulo]
+                try:
+                    params = {
+                        "ufs": ufs, "anos": anos, "arquivo_populacao": ARQUIVO_POP,
+                        "doencas": arboviroses, "causa_grupo": mortalidade,
+                        "meses": None
+                    }
+
+                    df_feature = funcao_a_chamar(**params)
+
+                    if df_feature is not None and not df_feature.empty:
+                        chaves_juncao = ['cod_mun_ibge_6', 'ANO', 'UF']
+                        cols_indicadores = [col for col in df_feature.columns if col.isupper() and col not in chaves_juncao]
+
+                        if not cols_indicadores:
+                            logger.warning(f"Aviso: Nenhum indicador (coluna em maiúsculas) encontrado no resultado de '{nome_indicador_modulo}'.")
+                            continue
+
+                        cols_para_manter = chaves_juncao + cols_indicadores
+                        df_feature_limpo = df_feature[cols_para_manter].drop_duplicates(subset=chaves_juncao)
+
+                        if initial_merge_df_final.empty:
+                            initial_merge_df_final = df_feature_limpo.copy()
+                            logger.info(f"  -> DataFrame final inicializado com dados de '{nome_indicador_modulo}'.")
+                        else:
+                            initial_merge_df_final = pd.merge(initial_merge_df_final, df_feature_limpo, on=chaves_juncao, how='left')
+                            logger.info(f"  -> Indicador(es) de '{nome_indicador_modulo}' mesclado(s) com sucesso.")
+                    else:
+                        logger.warning(f"  -> Aviso: DataFrame vazio ou None retornado por '{nome_indicador_modulo}'. Pulando.")
+
+                except Exception as e:
+                    logger.error(f"Erro grave ao processar o indicador '{nome_indicador_modulo}': {e}", exc_info=True)
+            else:
+                logger.warning(f"Aviso: Indicador '{nome_indicador_modulo}' solicitado não foi encontrado no dicionário de funções. Pulando.")
+
+        # Forçar df_final a ser o DataFrame consolidado antes da limpeza final
+        df_final = initial_merge_df_final.copy() # Copiar de volta para df_final
+
+        # --- Verificação Pós-Mesclagem ---
+        if df_final.empty:
+            raise Exception("Nenhum dado foi mesclado com sucesso no DataFrame final. Verifique os módulos de feature e os critérios de mesclagem.")
+
+
+        # --- ETAPA 3: Limpeza Final e Salvamento ---
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'message': 'Finalizando e salvando...'})
+        logger.info("--- ETAPA 3: Limpeza final e salvamento ---")
+
+        cols_indicadores_final = [c for c in df_final.columns if c.isupper() and c not in ['UF', 'ANO']]
+        df_final[cols_indicadores_final] = df_final[cols_indicadores_final].fillna(0)
+
+        ARQUIVO_INDICADORES_INTEGRADOS.parent.mkdir(parents=True, exist_ok=True)
+        df_final.to_csv(ARQUIVO_INDICADORES_INTEGRADOS, sep=';', encoding='utf-8-sig', index=False)
+        logger.info(f"✅ Painel de dados integrado salvo em: '{ARQUIVO_INDICADORES_INTEGRADOS}'")
+
+        output_file_instance, created = ManagedFile.objects.update_or_create(
+            file=os.path.relpath(ARQUIVO_INDICADORES_INTEGRADOS, settings.MEDIA_ROOT),
+            defaults={
+                'uploader': user,
+                'filename': ARQUIVO_INDICADORES_INTEGRADOS.name,
+                'description': f"Arquivo de indicadores consolidado da integração {task_id}",
+                'file_type': 'INDICATORS'
+            }
+        )
+        task_status_entry.status = 'SUCCESS'
+        task_status_entry.message = f"Pipeline de integração concluída com sucesso. Arquivo: {output_file_instance.filename}"
+        task_status_entry.output_file = output_file_instance
+        task_status_entry.save()
+
+        logger.info("🎉 FLUXO DE INTEGRAÇÃO DE INDICADORES CONCLUÍDO! 🎉")
+        return {'status': 'SUCCESS', 'message': 'Dados consolidados com sucesso!', 'output_file_id': output_file_instance.id}
+
+    except Exception as e:
+        logger.exception(f"Erro inesperado na pipeline de integração {task_id}.")
+        if task_status_entry:
+            task_status_entry.status = 'FAILURE'
+            task_status_entry.message = f"Falha na pipeline: {e}"
+            task_status_entry.save()
+        else:
+            logger.error(f"Erro ANTES da criação do IntegracaoTaskStatus para task {task_id}: {e}")
+        raise

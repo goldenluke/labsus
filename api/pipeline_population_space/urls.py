@@ -1,0 +1,30 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('trigger/', views.trigger_population_space_pipeline, name='population-space-trigger'),
+    path('trigger/compare/', views.trigger_population_compare_pipeline, name='population-space-trigger-compare'),
+    path('trigger/causal/', views.trigger_population_causal_pipeline, name='population-space-trigger-causal'),
+    path('trigger/anomaly/', views.trigger_population_anomaly_pipeline, name='population-space-trigger-anomaly'),
+    path('trigger/risk/', views.trigger_population_risk_pipeline, name='population-space-trigger-risk'),
+    path('trigger/predict-uncertainty/', views.trigger_population_predict_uncertainty_pipeline, name='population-space-trigger-predict-uncertainty'),
+    path('trigger/classify/', views.trigger_population_classify_pipeline, name='population-space-trigger-classify'),
+    path('trigger/transitions/', views.trigger_population_transitions_pipeline, name='population-space-trigger-transitions'),
+    path('trigger/survival/', views.trigger_population_survival_pipeline, name='population-space-trigger-survival'),
+    path('trigger/intervene/', views.trigger_population_intervene_pipeline, name='population-space-trigger-intervene'),
+    path('trigger/graph/', views.trigger_population_graph_pipeline, name='population-space-trigger-graph'),
+    path('trigger/factor/', views.trigger_population_factor_pipeline, name='population-space-trigger-factor'),
+    path('trigger/topology/', views.trigger_population_topology_pipeline, name='population-space-trigger-topology'),
+    path('trigger/early-warning/', views.trigger_population_early_warning_pipeline, name='population-space-trigger-early-warning'),
+    path('trigger/gnn/', views.trigger_population_gnn_pipeline, name='population-space-trigger-gnn'),
+    path('trigger/dynamics/', views.trigger_population_dynamics_pipeline, name='population-space-trigger-dynamics'),
+    path('trigger/per-capita/', views.trigger_population_per_capita_pipeline, name='population-space-trigger-per-capita'),
+    path('trigger/municipio/', views.trigger_population_municipio_pipeline, name='population-space-trigger-municipio'),
+    path('trigger/notificacao/', views.trigger_population_notificacao_pipeline, name='population-space-trigger-notificacao'),
+    path('trigger/familia/', views.trigger_population_familia_pipeline, name='population-space-trigger-familia'),
+    path('tasks/', views.PopulationSpaceTaskListView.as_view(), name='population-space-task-list'),
+    path('tasks/<uuid:pk>/', views.PopulationSpaceTaskDetailView.as_view(), name='population-space-task-detail'),
+    path('tasks/<uuid:task_id>/status/', views.get_population_space_task_status, name='population-space-task-status'),
+    path('facility/<str:cnes>/', views.facility_lookup, name='population-space-facility-lookup'),
+    path('facility-search/', views.facility_search, name='population-space-facility-search'),
+]

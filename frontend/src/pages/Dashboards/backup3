@@ -1,0 +1,569 @@
+// src/pages/Dashboards/KMeansPerfisSaudePage.jsx
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'; // useRef will be removed from here too
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+
+import useCeleryTaskStatus from '../../hooks/useCeleryTaskStatus';
+import { INDICADORES_MAP } from '../../config/indicadores';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+
+import MapaCoropleticoEstado from '../../components/charts/MapaCoropleticoEstado';
+import RadarChartComponent from '../../components/charts/RadarChartComponent';
+import FilterControls from '../../components/common/FilterControls';
+import TabButtons from '../../components/common/TabButtons';
+import FeedbackMessage from '../../components/common/FeedbackMessage';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import useAnalysisData from '../../hooks/useAnalysisData';
+
+import { FiDownload } from 'react-icons/fi';
+// ⭐ REMOVIDO: import ExportPdfButton from '../../components/common/ExportPdfButton'; ⭐
+
+
+const GEOJSON_ID_KEY = 'id';
+
+const DEFAULT_PROFILE_COLORS = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+'#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+];
+
+
+const KMeansPerfisSaudePage = () => {
+    const { uf: ufParam } = useParams();
+
+    const [selectedInputFileId, setSelectedInputFileId] = useState('');
+    const [availableFiles, setAvailableFiles] = useState([]);
+    const [loadingFiles, setLoadingFiles] = useState(true);
+    const [filesError, setFilesError] = useState(null);
+
+    const [selectedFileDetails, setSelectedFileDetails] = useState(null);
+
+
+    const navigate = useNavigate();
+
+    const [nClusters, setNClusters] = useState(3);
+    const [featuresForClustering, setFeaturesForClustering] = useState([]);
+    const [availableFeaturesForClustering, setAvailableFeaturesForClustering] = useState([]);
+
+    const [availableArchetypeFiles, setAvailableArchetypeFiles] = useState([]);
+    const [selectedArchetypeFileId, setSelectedArchetypeFileId] = useState('');
+    const [loadingArchetypeFiles, setLoadingArchetypeFiles] = useState(true);
+    const [archetypeFilesError, setArchetypeFilesError] = useState(null);
+
+    const [outputFilename, setOutputFilename] = useState('');
+    const [outputFileUrl, setOutputFileUrl] = useState(null);
+
+    const [selectedClusterId, setSelectedClusterId] = useState('');
+    const [availableClusters, setAvailableClusters] = useState([]);
+    const [selectedProfile, setSelectedProfile] = useState('');
+    const [availableProfiles, setAvailableProfiles] = useState([]);
+
+    const [activeTab, setActiveTab] = useState('mapa-principal'); // Default tab
+
+    const [animationYear, setAnimationYear] = useState(null);
+    const [animationPlaying, setAnimationPlaying] = useState(false);
+    const animationIntervalRef = useRef(null); // This useRef is only for animation, so it stays
+
+    const [ufCompLeft, setUfCompLeft] = useState(null);
+    const [yearCompLeft, setYearCompLeft] = useState(null);
+    const [ufCompRight, setUfCompRight] = useState(null);
+    const [yearCompRight, setYearCompRight] = useState(null);
+
+    // ⭐ REMOVIDO: const contentToPrintRef = useRef(null); ⭐ // This ref was specifically for PDF export
+
+
+    const {
+        allData, loading: hookLoading, error: hookError,
+        selectedUf, setSelectedUf, selectedYear, setSelectedYear,
+        availableUfs, availableYears, availableIndicators,
+        geojson, loadingMap, ufMapConfig,
+        setSelectedFileId: setHookSelectedFileId,
+    } = useAnalysisData('BR', 2022, 'perfil', ufParam || null, selectedInputFileId);
+
+
+    const ufOptions = useMemo(() => { return Object.keys(UF_CONFIGS).filter(uf => uf !== 'BR').map(ufCode => ({ label: UF_CONFIGS[ufCode].nome, value: ufCode })); }, []);
+    const yearOptions = useMemo(() => { const currentYear = new Date().getFullYear(); const years = Array.from({ length: 5 }, (_, i) => currentYear - i); return years.map(year => ({ label: year.toString(), value: year })); }, []);
+    const indicatorOptions = useMemo(() => { return Object.keys(INDICADORES_MAP).map(key => ({ label: INDICADORES_MAP[key], value: key })); }, []);
+
+
+    // 1. Fetch a lista de arquivos K-Means disponíveis
+    useEffect(() => {
+        const fetchFiles = async () => {
+            try {
+                setLoadingFiles(true);
+                setFilesError(null);
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', {
+                    headers: { 'Authorization': `Token ${token}` },
+                    params: { file_type: 'K_MEANS' }
+                });
+                const filteredOnlyKMeans = response.data.filter(file => file.file_type === 'K_MEANS');
+                setAvailableFiles(filteredOnlyKMeans);
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileIdFromUrl = urlParams.get('fileId');
+
+                if (fileIdFromUrl) {
+                    const fileExists = filteredOnlyKMeans.some(f => String(f.id) === fileIdFromUrl);
+                    if (fileExists) {
+                        setSelectedInputFileId(fileIdFromUrl);
+                    } else {
+                        setSelectedInputFileId(filteredOnlyKMeans.length > 0 ? filteredOnlyKMeans[0].id.toString() : '');
+                        if (filteredOnlyKMeans.length > 0) {
+                            navigate(`/dashboards/kmeans-perfis-saude?fileId=${filteredOnlyKMeans[0].id}`, { replace: true });
+                        }
+                    }
+                } else if (filteredOnlyKMeans.length > 0) {
+                    setSelectedInputFileId(filteredOnlyKMeans[0].id.toString());
+                    navigate(`/dashboards/kmeans-perfis-saude?fileId=${filteredOnlyKMeans[0].id}`, { replace: true });
+                } else {
+                    setSelectedInputFileId('');
+                }
+            } catch (err) {
+                console.error("Erro ao buscar arquivos K-Means para visualização:", err);
+                setFilesError("Não foi possível carregar arquivos de agrupamento K-Means.");
+            } finally {
+                setLoadingFiles(false);
+            }
+        };
+        fetchFiles();
+    }, [navigate]);
+
+
+    // Fetch a lista de arquivos de arquétipos disponíveis
+    useEffect(() => {
+        const fetchArchetypeFiles = async () => {
+            try {
+                setLoadingArchetypeFiles(true);
+                setArchetypeFilesError(null);
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', {
+                    headers: { 'Authorization': `Token ${token}` },
+                    params: { file_type: 'ARCHETYPE' }
+                });
+                const filteredOnlyArchetypes = response.data.filter(file => file.file_type === 'ARCHETYPE');
+                setAvailableArchetypeFiles(filteredOnlyArchetypes);
+
+                if (filteredOnlyArchetypes.length > 0) {
+                    setSelectedArchetypeFileId(filteredOnlyArchetypes[0].id.toString());
+                } else {
+                    setSelectedArchetypeFileId('');
+                }
+            } catch (err) {
+                console.error("Erro ao buscar arquivos de arquétipos:", err);
+                setArchetypeFilesError("Não foi possível carregar arquivos de arquétipos.");
+            } finally {
+                setLoadingArchetypeFiles(false);
+            }
+        };
+        fetchArchetypeFiles();
+    }, []);
+
+
+    const handleFileSelection = (fileId) => {
+        setSelectedInputFileId(fileId);
+    };
+
+    // 2. Quando o arquivo de entrada (resultado K-Means) é selecionado, carregar seus indicadores E DETALHES DO ARQUIVO
+    useEffect(() => {
+        const fetchFileContentsAndDetails = async () => {
+            if (!selectedInputFileId) {
+                setAvailableFeaturesForClustering([]);
+                setFeaturesForClustering([]);
+                setSelectedFileDetails(null); // Limpa detalhes se não há arquivo selecionado
+                return;
+            }
+            try {
+                const token = localStorage.getItem('authToken');
+
+                // BUSCA DETALHES DO ARQUIVO
+                const detailsResponse = await axios.get(`/api/files/${selectedInputFileId}/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                setSelectedFileDetails(detailsResponse.data); // DEFINE OS DETALHES
+
+                // Em seguida, busca o conteúdo do arquivo
+                const contentResponse = await axios.get(`/api/files/${selectedInputFileId}/data/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = contentResponse.data;
+
+                if (data.length > 0) {
+                    const firstItem = data[0];
+                    const metadataColumns = ['cod_mun_ibge_6', 'municipio', 'UF', 'cod_mun_ibge_7', 'perfil', 'nome_uf', 'ANO', 'populacao', 'cor', 'cluster_num'];
+                    const indicators = Object.keys(firstItem).filter(key =>
+                    !metadataColumns.includes(key) && firstItem[key] !== null && firstItem[key] !== undefined && !isNaN(parseFloat(String(firstItem[key]).replace(',', '.')))
+                    );
+                    setAvailableFeaturesForClustering(indicators);
+                    setFeaturesForClustering(indicators);
+                } else {
+                    setAvailableFeaturesForClustering([]);
+                    setFeaturesForClustering([]);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar indicadores ou detalhes do arquivo:", err);
+                setAvailableFeaturesForClustering([]);
+                setFeaturesForClustering([]);
+                setSelectedFileDetails(null); // Limpa detalhes em caso de erro
+            }
+        };
+        fetchFileContentsAndDetails();
+    }, [selectedInputFileId]);
+
+
+    useEffect(() => {
+        setHookSelectedFileId(selectedInputFileId);
+    }, [selectedInputFileId, setHookSelectedFileId]);
+
+
+    // Lógica para Popular Dropdowns de Filtros (Clusters, Perfis, Anos, UFs)
+    useEffect(() => {
+        if (allData && Array.isArray(allData) && allData.length > 0) {
+            const uniqueClusterNums = [...new Set(allData.map(item => item.cluster_num))]
+            .filter(num => num !== null && num !== undefined)
+            .sort((a, b) => a - b);
+            setAvailableClusters(uniqueClusterNums);
+            if (uniqueClusterNums.length > 0 && selectedClusterId === '') {
+                setSelectedClusterId('');
+            }
+
+            const uniqueProfiles = [...new Set(allData.map(item => item.perfil))]
+            .filter(Boolean)
+            .sort((a, b) => String(a).localeCompare(String(b)));
+            setAvailableProfiles(uniqueProfiles);
+            if (uniqueProfiles.length > 0 && selectedProfile === '') {
+                setSelectedProfile('');
+            }
+
+            if (availableYears.length > 0) {
+                if (selectedYear === null || selectedYear === undefined || !availableYears.includes(selectedYear)) {
+                    setSelectedYear(availableYears[0]);
+                }
+            }
+            if (availableUfs.length > 0) {
+                if (selectedUf === null || selectedUf === undefined || !availableUfs.includes(selectedUf) && selectedUf !== 'BR') {
+                    setSelectedUf('BR');
+                }
+            }
+
+            if (availableYears.length > 0) {
+                if (animationYear === null || !availableYears.includes(animationYear)) {
+                    setAnimationYear(availableYears[0]);
+                }
+                if (availableYears.length >= 2) {
+                    if (yearCompLeft === null || !availableYears.includes(yearCompLeft)) setYearCompLeft(availableYears[0]);
+                    if (yearCompRight === null || !availableYears.includes(yearCompRight)) {
+                        setYearCompRight(availableYears.length > 1 ? availableYears[1] : availableYears[0]);
+                    }
+                } else {
+                    setYearCompLeft(availableYears[0]); setYearCompRight(availableYears[0]);
+                }
+            } else {
+                setAnimationYear(null);
+                setYearCompLeft(null); setYearCompRight(null);
+            }
+
+            if (availableUfs.length > 0) {
+                const defaultCompUf = (selectedUf && availableUfs.includes(selectedUf)) ? selectedUf : 'BR';
+
+                if (ufCompLeft === null || !availableUfs.includes(ufCompLeft) && ufCompLeft !== 'BR') setUfCompLeft(defaultCompUf);
+                if (ufCompRight === null || !availableUfs.includes(ufCompRight) && ufCompRight !== 'BR') setUfCompRight(defaultCompUf);
+            } else {
+                setUfCompLeft('BR'); setUfCompRight('BR');
+            }
+
+
+        } else {
+            setAvailableClusters([]); setSelectedClusterId('');
+            setAvailableProfiles([]); setSelectedProfile('');
+            setSelectedYear(2022); setSelectedUf('BR');
+            setAnimationYear(null);
+            setYearCompLeft(null); setYearCompRight(null);
+            setUfCompLeft('BR'); setUfCompRight('BR');
+        }
+    }, [allData, selectedClusterId, selectedProfile, availableYears, availableUfs, selectedYear, selectedUf, animationYear, ufCompLeft, ufCompRight, yearCompLeft, yearCompRight]);
+
+    const toggleAnimation = useCallback(() => {
+        setAnimationPlaying(prev => !prev);
+    }, []);
+
+    useEffect(() => {
+        if (animationPlaying && availableYears.length > 1) {
+            animationIntervalRef.current = setInterval(() => {
+                setAnimationYear(prevYear => {
+                    const currentIndex = availableYears.indexOf(prevYear);
+                    const nextIndex = (currentIndex + 1) % availableYears.length;
+                    return availableYears[nextIndex];
+                });
+            }, 1000);
+        } else {
+            clearInterval(animationIntervalRef.current);
+        }
+        return () => clearInterval(animationIntervalRef.current);
+    }, [animationPlaying, availableYears]);
+
+
+    const getFilteredDataForMap = useCallback((targetUf, targetYear) => {
+        if (!allData || allData.length === 0 || !targetYear) return [];
+
+        let currentData = allData.filter(item => item.ANO === targetYear);
+
+        if (targetUf && targetUf !== 'BR') {
+            const ufConfigForFilter = UF_CONFIGS[targetUf];
+            if (ufConfigForFilter && ufConfigForFilter.ibgePrefix) {
+                currentData = currentData.filter(item => String(item.cod_mun_ibge_7).startsWith(ufConfigForFilter.ibgePrefix));
+            } else {
+                currentData = currentData.filter(item => item.UF === targetUf);
+            }
+        }
+        if (activeTab === 'mapa-principal' && selectedClusterId !== '' && selectedClusterId !== null) {
+            currentData = currentData.filter(item => String(item.cluster_num) === String(selectedClusterId));
+        }
+        if (activeTab === 'mapa-principal' && selectedProfile && selectedProfile !== 'Todos') {
+            currentData = currentData.filter(item => item.perfil === selectedProfile);
+        }
+
+        return currentData;
+    }, [allData, selectedUf, selectedYear, selectedClusterId, selectedProfile, activeTab]);
+
+    const filteredMainMapData = useMemo(() => getFilteredDataForMap(selectedUf, selectedYear), [getFilteredDataForMap, selectedUf, selectedYear]);
+    const filteredCompLeftData = useMemo(() => getFilteredDataForMap(ufCompLeft, yearCompLeft), [getFilteredDataForMap, ufCompLeft, yearCompLeft]);
+    const filteredCompRightData = useMemo(() => getFilteredDataForMap(ufCompRight, yearCompRight), [getFilteredDataForMap, ufCompRight, yearCompRight]);
+    const filteredAnimationData = useMemo(() => getFilteredDataForMap(selectedUf, animationYear), [getFilteredDataForMap, selectedUf, animationYear]);
+
+
+    // -----------------------------------------------------
+    // Mensagens de Feedback Globais
+    // -----------------------------------------------------
+    let feedbackMessage = null;
+
+    if (hookError) feedbackMessage = <FeedbackMessage message={`Erro ao carregar dados: ${hookError}`} />;
+    else if (hookLoading || loadingFiles || loadingMap || loadingArchetypeFiles) feedbackMessage = <FeedbackMessage message="Carregando dados..." />;
+    else if (filesError) feedbackMessage = <FeedbackMessage message={`Erro ao buscar arquivos: ${filesError}`} />;
+    else if (availableFiles.length === 0) feedbackMessage = <FeedbackMessage message="Nenhum ficheiro de agrupamento K-Means disponível. Use a pipeline de K-Means para gerar um." />;
+    else if (!selectedInputFileId) feedbackMessage = <FeedbackMessage message="Por favor, selecione um ficheiro de agrupamento K-Means." />;
+    else if (allData.length === 0 && !hookLoading) feedbackMessage = <FeedbackMessage message="O ficheiro K-Means selecionado está vazio ou não contém dados válidos. Verifique o conteúdo do arquivo." />;
+    else if (getFilteredDataForMap(selectedUf, selectedYear).length === 0 && allData.length > 0) feedbackMessage = <FeedbackMessage message="Nenhum dado encontrado para os filtros selecionados (UF/Ano/Cluster/Perfil). Tente ajustar os filtros." />;
+    else if (!geojson) feedbackMessage = <FeedbackMessage message={`Não foi possível carregar o mapa GeoJSON para ${selectedUf} (ou Brasil). Verifique os arquivos.`} />;
+
+
+    // -----------------------------------------------------
+    // Props para FilterControls (controles de filtro globais)
+    // -----------------------------------------------------
+    const filterControlsProps = {
+        selectedUf, setSelectedUf, availableUfs, ufOptions,
+        selectedYear, setSelectedYear, availableYears, yearOptions,
+        selectedClusterId, setSelectedClusterId, availableClusters,
+        selectedProfile, setSelectedProfile, availableProfiles,
+        activeTab,
+
+        ufCompLeft, setUfCompLeft, yearCompLeft, setYearCompLeft,
+        ufCompRight, setUfCompRight, yearCompRight, setYearCompRight,
+        animationYear, availableYears,
+
+        selectedInputFileId, setSelectedInputFileId, availableFiles, loadingFiles, filesError
+    };
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+        Visualizador de Agrupamentos K-Means
+        </h1>
+
+        {feedbackMessage} {/* Mensagem de Feedback Global */}
+
+        {/* Bloco de Detalhes do Arquivo Selecionado e Botões de Download (similar ao PredictionViewer) */}
+        {!feedbackMessage && selectedFileDetails && (
+            <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div className="mb-4 md:mb-0 md:mr-4 flex-grow">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Detalhes do Arquivo K-Means:</h2>
+            <p className="text-gray-700 text-sm mb-1"><span className="font-medium">Nome:</span> {selectedFileDetails.filename}</p>
+            <p className="text-gray-700 text-sm mb-1"><span className="font-medium">Uploader:</span> {selectedFileDetails.uploader_username}</p>
+            <p className="text-gray-700 text-sm mb-1"><span className="font-medium">Upload em:</span> {new Date(selectedFileDetails.uploaded_at).toLocaleDateString()}</p>
+            {selectedFileDetails.description && (
+                <p className="text-gray-700 text-sm mt-2"><span className="font-medium">Descrição:</span> {selectedFileDetails.description}</p>
+            )}
+            </div>
+            {/* Botões de Download */}
+            <div className="flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0">
+            {selectedFileDetails.file && ( // Botão de download do CSV original
+                <a
+                href={selectedFileDetails.file}
+                download={selectedFileDetails.filename}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center flex-shrink-0"
+                title={`Baixar ${selectedFileDetails.filename}`}
+                >
+                <FiDownload className="mr-2" /> Baixar CSV
+                </a>
+            )}
+            {/* ⭐ REMOVIDO: Botão de Baixar PDF ⭐ */}
+            {/* {allData.length > 0 && (
+                <ExportPdfButton
+                contentRef={contentToPrintRef}
+                filename={`${selectedFileDetails.filename.replace(/\.csv$/, '')}_Relatorio_KMeans.pdf`}
+                title={`Relatório K-Means - ${selectedFileDetails.filename}`}
+                />
+        )} */}
+        </div>
+        </div>
+        )}
+
+
+        {/* Renderiza o conteúdo principal apenas se não houver feedback de error/carregamento */}
+        {!feedbackMessage && (
+            // ⭐ A ref 'contentToPrintRef' deve envolver toda a área a ser capturada (agora sem o botão PDF) ⭐
+            // Mantenha o div, mas remova a ref se não for usada para mais nada
+            <div /* ref={contentToPrintRef} REMOVIDO */ className="grid grid-cols-1 gap-6 mt-6 p-4 bg-white rounded-lg shadow-md">
+            {/* Botões de Aba */}
+            <TabButtons
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            availableYears={availableYears}
+            availableUfs={availableUfs}
+            // Tabs específicas para K-Means
+            tabs={[
+                { id: 'mapa-principal', label: '🗺️ Mapa Principal' },
+                { id: 'mapa-comparacao', label: '⚖️ Comparar Mapas' },
+                { id: 'animacao', label: '🎥 Evolução Temporal (Animação)' },
+                              { id: 'radar', label: '📊 Análise de Perfis (Radar)' },
+            ]}
+            />
+
+            {/* Conteúdo das Abas */}
+            <div className="bg-white p-4 rounded-lg shadow-md min-h-[500px]">
+            {activeTab === 'mapa-principal' && (
+                <>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Mapa de Agrupamentos por Perfil</h2>
+                <MapaCoropleticoEstado
+                uf={selectedUf}
+                data={filteredMainMapData}
+                selectedIndicator={'perfil'} // Hardcoded para 'perfil' aqui
+                ufConfig={ufMapConfig}
+                selectedYear={selectedYear}
+                />
+                </>
+            )}
+
+            {activeTab === 'mapa-comparacao' && (
+                <>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Comparar Mapas de Perfis</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col items-center">
+                <label className="flex flex-col w-full px-4 mb-2">
+                UF Esquerda:
+                <select
+                value={ufCompLeft}
+                onChange={(e) => setUfCompLeft(e.target.value)}
+                className="p-2 border rounded-md"
+                >
+                <option value="BR">Brasil</option>
+                {Array.isArray(availableUfs) && availableUfs.map(ufCode => (<option key={`uf-left-${ufCode}`} value={ufCode}>{ufCode}</option>))}
+                </select>
+                </label>
+                <label className="flex flex-col w-full px-4 mb-2">
+                Ano Esquerdo:
+                <select
+                value={yearCompLeft}
+                onChange={(e) => setYearCompLeft(parseInt(e.target.value))}
+                className="p-2 border rounded-md"
+                >
+                {Array.isArray(availableYears) && availableYears.map(year => (<option key={`comp-left-${year}`} value={year}>{year}</option>))}
+                </select>
+                </label>
+
+                <div className="flex flex-col items-center w-full">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Ano: {yearCompLeft} - UF: {ufCompLeft}</h3>
+                <MapaCoropleticoEstado
+                uf={ufCompLeft}
+                data={filteredCompLeftData}
+                selectedIndicator={'perfil'}
+                ufConfig={UF_CONFIGS[ufCompLeft]}
+                selectedYear={yearCompLeft}
+                />
+                </div>
+                </div>
+                <div className="flex flex-col items-center">
+                <label className="flex flex-col w-full px-4 mb-2">
+                UF Direita:
+                <select
+                value={ufCompRight}
+                onChange={(e) => setUfCompRight(e.target.value)}
+                className="p-2 border rounded-md"
+                >
+                <option value="BR">Brasil</option>
+                {Array.isArray(availableUfs) && availableUfs.map(ufCode => (<option key={`uf-right-${ufCode}`} value={ufCode}>{ufCode}</option>))}
+                </select>
+                </label>
+                <label className="flex flex-col w-full px-4 mb-2">
+                Ano Direito:
+                <select
+                value={yearCompRight}
+                onChange={(e) => setYearCompRight(parseInt(e.target.value))}
+                className="p-2 border rounded-md"
+                >
+                {Array.isArray(availableYears) && availableYears.map(year => (<option key={`comp-right-${year}`} value={year}>{year}</option>))}
+                </select>
+                </label>
+                <div className="flex flex-col items-center w-full">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Ano: {yearCompRight} - UF: {ufCompRight}</h3>
+                <MapaCoropleticoEstado
+                uf={ufCompRight}
+                data={filteredCompRightData}
+                selectedIndicator={'perfil'}
+                ufConfig={UF_CONFIGS[ufCompRight]}
+                selectedYear={yearCompRight}
+                />
+                </div>
+                </div>
+                </div>
+                </>
+            )}
+
+            {activeTab === 'animacao' && (
+                <>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Evolução Temporal dos Perfis</h2>
+                <div className="flex justify-center items-center space-x-4 mb-4">
+                <button
+                onClick={toggleAnimation}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                >
+                {animationPlaying ? 'Pausar' : 'Iniciar'} Animação
+                </button>
+                <span className="text-xl font-bold text-gray-800">Ano: {animationYear}</span>
+                </div>
+                <MapaCoropleticoEstado
+                uf={selectedUf}
+                data={filteredAnimationData}
+                selectedIndicator={'perfil'}
+                ufConfig={ufMapConfig}
+                selectedYear={animationYear}
+                />
+                {availableYears.length < 2 && (
+                    <p className="text-red-500 text-center mt-4">Necessário dados de múltiplos anos para a animação.</p>
+                )}
+                </>
+            )}
+
+            {activeTab === 'radar' && (
+                <>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-4">Gráfico Radar de Características dos Perfis</h2>
+                <RadarChartComponent
+                data={allData}
+                selectedYear={selectedYear}
+                featuresForClustering={featuresForClustering}
+                />
+                </>
+            )}
+
+            {/* Conteúdo para abas ainda não implementadas */}
+            {activeTab !== 'mapa-principal' && activeTab !== 'mapa-comparacao' && activeTab !== 'animacao' && activeTab !== 'radar' && (
+                <p className="text-gray-500 text-center mt-8">Conteúdo para esta aba ainda não implementado.</p>
+            )}
+            </div>
+            </div>
+        )}
+        </div>
+    );
+};
+
+export default KMeansPerfisSaudePage;

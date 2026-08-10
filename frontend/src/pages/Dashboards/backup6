@@ -1,0 +1,351 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import Plot from 'react-plotly.js';
+import usePageTitle from '../../hooks/usePageTitle';
+import { useFluxoPacientesData } from '../../hooks/useFluxoPacientesData';
+import FeedbackMessage from '../../components/common/FeedbackMessage';
+import InfoCard from '../../components/common/InfoCard';
+import { FiDownload, FiRefreshCw } from 'react-icons/fi';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import DataSelector from '../../components/DataSelector';
+
+const STATE_COLOR_PALETTE = [
+    '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c',
+'#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928',
+'#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3', '#fdb462',
+'#b3de69', '#fccde5', '#d9d9d9', '#bc80bd', '#ccebc5', '#ffed6f'
+];
+
+const generateColorFromUF = (uf) => {
+    let hash = 0;
+    if (!uf) return '#CCCCCC';
+    for (let i = 0; i < uf.length; i++) {
+        hash = uf.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % STATE_COLOR_PALETTE.length;
+    return STATE_COLOR_PALETTE[index];
+};
+
+const plasmaColorScale = (value) => {
+    const colors = [ [0.0, [13, 8, 135]], [0.1, [70, 3, 163]], [0.2, [118, 0, 168]], [0.3, [160, 20, 146]], [0.4, [195, 56, 120]], [0.5, [222, 92, 91]], [0.6, [241, 130, 63]], [0.7, [252, 169, 40]], [0.8, [252, 208, 26]], [0.9, [240, 249, 23]], [1.0, [255, 255, 255]] ];
+    for (let i = 0; i < colors.length - 1; i++) {
+        const c1_val = colors[i][0]; const c2_val = colors[i + 1][0];
+        if (value >= c1_val && value <= c2_val) {
+            const t = (value - c1_val) / (c2_val - c1_val);
+            const c1_rgb = colors[i][1]; const c2_rgb = colors[i + 1][1];
+            const r = Math.round(c1_rgb[0] * (1 - t) + c2_rgb[0] * t);
+            const g = Math.round(c1_rgb[1] * (1 - t) + c2_rgb[1] * t);
+            const b = Math.round(c1_rgb[2] * (1 - t) + c2_rgb[2] * t);
+            return `rgb(${r},${g},${b})`;
+        }
+    }
+    return `rgb(13, 8, 135)`;
+};
+
+const FluxoPacientesViewerPage = () => {
+    usePageTitle('Dashboard de Fluxo de Pacientes');
+
+    const {
+        loading, error, fileDetails, availableFiles, selectedFileId, setSelectedFileId,
+        flowData,
+        availableUfs, setSelectedUf, selectedUf,
+        loadingMap, geojson,
+    } = useFluxoPacientesData();
+
+    const [ufFiltro, setUfFiltro] = useState('BR');
+    const [minPacientesFiltro, setMinPacientesFiltro] = useState(5);
+    const [filtrosAplicados, setFiltrosAplicados] = useState(null);
+    const [ufCores, setUfCores] = useState({});
+    const [selectedPolo, setSelectedPolo] = useState('');
+
+    useEffect(() => {
+        if (ufFiltro !== selectedUf) {
+            setSelectedUf(ufFiltro);
+        }
+    }, [ufFiltro, selectedUf, setSelectedUf]);
+
+    useEffect(() => {
+        setFiltrosAplicados(null);
+        setUfFiltro('BR');
+    }, [selectedFileId]);
+
+    const handleAtualizarMapa = () => {
+        setFiltrosAplicados({ uf: ufFiltro, min: minPacientesFiltro });
+    };
+
+    useEffect(() => {
+        if (geojson?.features) {
+            const ufsNoGeojson = new Set(geojson.features.map(f => f.properties.UF).filter(Boolean));
+            const novasCores = {};
+            let corAtualizada = false;
+            ufsNoGeojson.forEach(uf => {
+                if (!ufCores[uf]) {
+                    novasCores[uf] = generateColorFromUF(uf);
+                    corAtualizada = true;
+                }
+            });
+            if (corAtualizada) {
+                setUfCores(prev => ({ ...prev, ...novasCores }));
+            }
+        }
+    }, [geojson, ufCores]);
+
+    const filteredFlowData = useMemo(() => {
+        if (!filtrosAplicados) return [];
+        return flowData.filter(d => d.N_PACIENTES >= filtrosAplicados.min);
+    }, [flowData, filtrosAplicados]);
+
+    const mapPlotData = useMemo(() => {
+        if (!filtrosAplicados || !filteredFlowData.length || !geojson) return null;
+
+        const { uf } = filtrosAplicados;
+        const dataForMap = uf === 'BR' ? filteredFlowData : filteredFlowData.filter(d => d.uf_destino === uf || d.uf_origem === uf);
+        const validDataForMap = dataForMap.filter(d => !isNaN(d.lat_origem) && !isNaN(d.lon_origem) && !isNaN(d.lat_destino) && !isNaN(d.lon_destino));
+        if (validDataForMap.length === 0) return null;
+
+        let traces = [];
+        const featuresPorUF = geojson.features.reduce((acc, feature) => {
+            const ufProp = feature.properties.UF;
+            if (ufProp) { (acc[ufProp] = acc[ufProp] || []).push(feature); }
+            return acc;
+        }, {});
+
+        for (const ufKey in featuresPorUF) {
+            const ufFeatures = { type: "FeatureCollection", features: featuresPorUF[ufKey] };
+            traces.push({
+                type: 'choroplethmapbox', geojson: ufFeatures, locations: ufFeatures.features.map(f => f.properties.id),
+                        z: ufFeatures.features.map(() => 1), featureidkey: 'properties.id',
+                        colorscale: [['0', ufCores[ufKey] || '#cccccc'], ['1', ufCores[ufKey] || '#cccccc']], showscale: false,
+                        hoverinfo: 'text', text: ufFeatures.features.map(f => `${f.properties.name} (${f.properties.UF})`),
+                        marker: { opacity: 0.6, line: { color: 'black', width: 0.5 } }
+            });
+        }
+
+        const minPacientesLog = Math.log(Math.min(...validDataForMap.map(d => d.N_PACIENTES).filter(n => n > 0)) || 1);
+        const maxPacientesLog = Math.log(Math.max(...validDataForMap.map(d => d.N_PACIENTES)) || 1);
+        const flowLinesTraces = validDataForMap.map(row => ({
+            type: 'scattermapbox', lon: [row.lon_origem, row.lon_destino], lat: [row.lat_origem, row.lat_destino],
+            mode: 'lines',
+            line: { width: 1 + (((Math.log(row.N_PACIENTES) - minPacientesLog) / (maxPacientesLog - minPacientesLog || 1)) * 4), color: plasmaColorScale((Math.log(row.N_PACIENTES) - minPacientesLog) / (maxPacientesLog - minPacientesLog || 1)) },
+                                                            hoverinfo: 'text', text: `De: ${row.municipio_origem}/${row.uf_origem}<br>Para: ${row.municipio_destino}/${row.uf_destino}<br>Nº Pacientes: ${row.N_PACIENTES}`,
+                                                            below: '',
+        }));
+
+        return [...traces, ...flowLinesTraces];
+    }, [filtrosAplicados, filteredFlowData, geojson, ufCores]);
+
+    const mapLayout = useMemo(() => {
+        const baseLayout = {
+            showlegend: false,
+            margin: { t: 0, b: 0, l: 0, r: 0 },
+        };
+        if (!filtrosAplicados) {
+            baseLayout.mapbox = { style: "light", center: { lon: -54, lat: -15 }, zoom: 3.5, accesstoken: 'pk.eyJ1IjoibHVjYXNkb3VyYWRvIiwiYSI6ImNtZG1mbnQybzFsODUya29zNm40OXI1dWkifQ.QHkqc3MJcfn9Dave7ow0Yg' };
+            return baseLayout;
+        }
+        const { uf } = filtrosAplicados;
+        if (uf === 'BR' && geojson?.features?.length > 0) {
+            let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
+            geojson.features.forEach(feature => {
+                const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
+                polygons.forEach(poly => {
+                    poly[0].forEach(point => {
+                        minLon = Math.min(minLon, point[0]);
+                        maxLon = Math.max(maxLon, point[0]);
+                        minLat = Math.min(minLat, point[1]);
+                        maxLat = Math.max(maxLat, point[1]);
+                    });
+                });
+            });
+            const centerLon = (minLon + maxLon) / 2;
+            const centerLat = (minLat + maxLat) / 2;
+            const lonDiff = Math.abs(maxLon - minLon);
+            const latDiff = Math.abs(maxLat - minLat);
+            const maxDiff = Math.max(lonDiff, latDiff);
+            const zoom = Math.log2(360 / maxDiff) - 1.5;
+            baseLayout.mapbox = {
+                accesstoken: 'pk.eyJ1IjoibHVjYXNkb3VyYWRvIiwiYSI6ImNtZG1mbnQybzFsODUya29zNm40OXI1dWkifQ.QHkqc3MJcfn9Dave7ow0Yg',
+                style: "light", center: { lon: centerLon, lat: centerLat }, zoom: zoom
+            };
+        } else {
+            baseLayout.mapbox = {
+                accesstoken: 'pk.eyJ1IjoibHVjYXNkb3VyYWRvIiwiYSI6ImNtZG1mbnQybzFsODUya29zNm40OXI1dWkifQ.QHkqc3MJcfn9Dave7ow0Yg',
+                style: "light",
+                center: { lon: UF_CONFIGS[uf]?.center?.lon || -54, lat: UF_CONFIGS[uf]?.center?.lat || -15 },
+                zoom: UF_CONFIGS[uf]?.zoom ? UF_CONFIGS[uf].zoom - 0.5 : 3.5,
+            };
+        }
+        return baseLayout;
+    }, [filtrosAplicados, geojson]);
+
+    const rankingData = useMemo(() => {
+        if (!filteredFlowData.length) return { polos: [], enviadores: [] };
+        const polos = filteredFlowData.reduce((acc, d) => { const key = `${d.municipio_destino} (${d.uf_destino})`; acc[key] = (acc[key] || 0) + d.N_PACIENTES; return acc; }, {});
+        const enviadores = filteredFlowData.reduce((acc, d) => { const key = `${d.municipio_origem} (${d.uf_origem})`; acc[key] = (acc[key] || 0) + d.N_PACIENTES; return acc; }, {});
+        const topPolos = Object.entries(polos).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const topEnviadores = Object.entries(enviadores).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        return { polos: topPolos, enviadores: topEnviadores };
+    }, [filteredFlowData]);
+
+    const polosSankeyOptions = useMemo(() => {
+        if (!rankingData || !rankingData.polos) return [];
+        return rankingData.polos.map(p => p[0]);
+    }, [rankingData]);
+
+    useEffect(() => {
+        if (polosSankeyOptions.length > 0 && (!selectedPolo || !polosSankeyOptions.includes(selectedPolo))) {
+            setSelectedPolo(polosSankeyOptions[0]);
+        }
+    }, [polosSankeyOptions, selectedPolo]);
+
+    const sankeyDataAndLayout = useMemo(() => {
+        if (!filteredFlowData.length || !selectedPolo) return null;
+        const poloNameOnly = selectedPolo.split(' (')[0];
+        const poloData = filteredFlowData.filter(d => d.municipio_destino === poloNameOnly).sort((a, b) => b.N_PACIENTES - a.N_PACIENTES);
+        if (poloData.length === 0) return null;
+        const originLabels = poloData.map(d => `${d.municipio_origem} (${d.uf_origem})`);
+        const labels = [selectedPolo, ...new Set(originLabels)];
+        const dynamicHeight = Math.max(500, labels.length * 28);
+        const plotData = [{ type: 'sankey', orientation: 'h', node: { pad: 10, thickness: 15, line: { color: 'black', width: 0.5 }, label: labels }, link: { source: poloData.map(d => labels.indexOf(`${d.municipio_origem} (${d.uf_origem})`)), target: poloData.map(() => 0), value: poloData.map(d => d.N_PACIENTES) } }];
+        const layout = { title: `Fluxo de Pacientes para ${selectedPolo}`, height: dynamicHeight, font: { size: 12 }, margin: { t: 50, b: 50, l: 50, r: 50 } };
+        return { plotData, layout };
+    }, [filteredFlowData, selectedPolo]);
+
+    if (loading && !fileDetails) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen p-10">
+            <LoadingSpinner size="lg" color="blue" />
+            <p className="mt-4 text-gray-700">Carregando dados...</p>
+            </div>
+        );
+    }
+
+    if (error) return <FeedbackMessage message={`Erro: ${error}`} type="error" />;
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl text-center text-gray-800 mb-8">Dashboard - Análise de Fluxo de Pacientes</h1>
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <DataSelector
+        files={availableFiles}
+        selectedValue={selectedFileId}
+        onChange={setSelectedFileId}
+        isLoading={loading && availableFiles.length === 0}
+        label="Selecione o arquivo de análise:"
+        />
+        </div>
+
+        {!selectedFileId && !loading && <FeedbackMessage message="Por favor, selecione um arquivo para começar." type="info" />}
+
+        {selectedFileId && fileDetails && (
+            <>
+            <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Arquivo de Análise:</h2>
+            <p className="text-gray-700 text-sm mb-1"><span className="font-medium">Nome:</span> {fileDetails.filename}</p>
+            <p className="text-gray-700 text-sm mt-2"><span className="font-medium">Parâmetros:</span> {fileDetails.description}</p>
+            </div>
+            <a href={fileDetails.file} download={fileDetails.filename} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center flex-shrink-0 mt-4 md:mt-0">
+            <FiDownload className="mr-2" /> Baixar CSV
+            </a>
+            </div>
+
+            <InfoCard title="Mapa de Fluxo Intermunicipal">
+            <p>O mapa exibe as rotas de deslocamento de pacientes. A cor e a espessura da linha indicam o volume de pacientes. O fundo exibe os municípios coloridos por estado.</p>
+            </InfoCard>
+            <div className="bg-white p-4 rounded-lg shadow-md w-full mt-4">
+            <div className="flex flex-wrap gap-4 p-4 items-center">
+            <label className="flex flex-col font-semibold">Focar em UF:
+            <select value={ufFiltro} onChange={e => setUfFiltro(e.target.value)} className="p-2 border rounded-md mt-1 font-normal">
+            {availableUfs.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+            </select>
+            </label>
+            <label className="flex flex-col font-semibold w-full max-w-xs">Mínimo de Pacientes por Fluxo: {minPacientesFiltro}
+            <input type="range" min="1" max="100" step="1" value={minPacientesFiltro} onChange={e => setMinPacientesFiltro(parseInt(e.target.value, 10))} className="w-full" />
+            </label>
+            <button onClick={handleAtualizarMapa} disabled={loadingMap} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center shadow-md transition-opacity disabled:opacity-50">
+            {loadingMap ? (
+                <LoadingSpinner size="sm" color="white" />
+            ) : (
+                <FiRefreshCw className="mr-2" />
+            )}
+            <span className="ml-2">{loadingMap ? 'Carregando mapa...' : 'Atualizar Mapa'}</span>
+            </button>
+            </div>
+
+            <div className="h-[600px] w-full">
+            {filtrosAplicados ? (
+                (loadingMap) ? (
+                    <div className="flex flex-col items-center justify-center h-full">
+                    <LoadingSpinner size="lg" color="blue" />
+                    <p className="mt-4 text-gray-500">A carregar mapa base...</p>
+                    </div>
+                ) : (mapPlotData ?
+                <Plot
+                key={`${selectedFileId}-${JSON.stringify(filtrosAplicados)}`}
+                data={mapPlotData}
+                layout={mapLayout}
+                config={{ responsive: true, displayModeBar: true }}
+                className="w-full h-full"
+                />
+                : <p className="flex items-center justify-center h-full">Sem dados de fluxo para exibir com os filtros aplicados.</p>)
+            ) : (
+                <div className="flex items-center justify-center h-full bg-gray-100 rounded-md">
+                <p className="text-gray-500">Ajuste os filtros e clique em "Atualizar Mapa" para gerar a visualização.</p>
+                </div>
+            )}
+            </div>
+            </div>
+
+            {filtrosAplicados && (
+                <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                <div className="space-y-4">
+                <InfoCard title="Principais Polos de Atendimento">
+                <p>Este gráfico mostra os 10 municípios que mais receberam pacientes de outras cidades, com base nos filtros aplicados.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md h-[500px] w-full">
+                <Plot data={[{ x: rankingData.polos.map(p => p[1]), y: rankingData.polos.map(p => p[0]), type: 'bar', orientation: 'h' }]} layout={{ title: 'Top 10 Municípios de Destino (Polos)', yaxis: { autorange: 'reversed', automargin: true }, xaxis: {title: 'Nº de Pacientes Recebidos'} }} config={{ responsive: true, displayModeBar: false }} className="w-full h-full" />
+                </div>
+                </div>
+                <div className="space-y-4">
+                <InfoCard title="Principais Municípios de Origem">
+                <p>Este gráfico mostra os 10 municípios que mais encaminharam pacientes para outras cidades, com base nos filtros aplicados.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md h-[500px] w-full">
+                <Plot data={[{ x: rankingData.enviadores.map(p => p[1]), y: rankingData.enviadores.map(p => p[0]), type: 'bar', orientation: 'h', marker: {color: '#ff7f0e'} }]} layout={{ title: 'Top 10 Municípios de Origem', yaxis: { autorange: 'reversed', automargin: true }, xaxis: {title: 'Nº de Pacientes Enviados'} }} config={{ responsive: true, displayModeBar: false }} className="w-full h-full" />
+                </div>
+                </div>
+                </div>
+                <div className="mt-8 space-y-4">
+                <InfoCard title="Análise Detalhada do Fluxo para um Polo">
+                <p>Selecione um município de destino (polo) para visualizar em detalhe de quais cidades ele recebe pacientes e em qual volume.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md w-full">
+                <label className="flex flex-col font-semibold max-w-sm mx-auto mb-4">Selecione um Polo de Atendimento para detalhar:
+                <select value={selectedPolo} onChange={e => setSelectedPolo(e.target.value)} className="p-2 border rounded-md mt-1 font-normal">
+                {polosSankeyOptions.map(polo => <option key={polo} value={polo}>{polo}</option>)}
+                </select>
+                </label>
+                {sankeyDataAndLayout ?
+                    <Plot
+                    data={sankeyDataAndLayout.plotData}
+                    layout={sankeyDataAndLayout.layout}
+                    config={{ responsive: true, displayModeBar: false }}
+                    className="w-full"
+                    />
+                    : <div className="h-[500px] flex items-center justify-center">
+                    <p>Selecione um polo para ver os detalhes do fluxo.</p>
+                    </div>
+                }
+                </div>
+                </div>
+                </>
+            )}
+            </>
+    )}
+    </div>
+    );
+};
+
+export default FluxoPacientesViewerPage;

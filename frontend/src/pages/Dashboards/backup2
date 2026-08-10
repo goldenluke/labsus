@@ -1,0 +1,189 @@
+// src/pages/Dashboards/VisaoGeralPage.jsx
+
+import React, { useMemo, useState, useEffect } from 'react';
+import Plot from 'react-plotly.js';
+import { useParams } from 'react-router-dom';
+
+import useAnalysisData from '../../hooks/useAnalysisData';
+
+import { INDICADORES_MAP } from '../../config/indicadores';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+
+const GEOJSON_ID_KEY = 'id';
+
+const VisaoGeralPage = () => {
+    const { uf: ufParam } = useParams();
+
+    const {
+        allData, loading, error,
+        availableFiles: filesForDropdown, selectedFileId, setSelectedFileId,
+        selectedYear, setSelectedYear,
+        selectedIndicator, setSelectedIndicator,
+        scatterX, setScatterX, scatterY, setScatterY,
+        availableYears, availableIndicators,
+        geojson, loadingMap,
+    } = useAnalysisData('BR', 2022, 'TMI', ufParam, { fetchFileList: true });
+
+
+    let feedbackMessage = null;
+    if (error) feedbackMessage = <p className="text-red-500">Erro: {error}</p>;
+    else if (loading && filesForDropdown.length === 0) feedbackMessage = <p>A carregar lista de ficheiros do usuário...</p>;
+    else if (!loading && filesForDropdown.length === 0) feedbackMessage = <p>Nenhum ficheiro CSV foi enviado.</p>;
+    else if (!selectedFileId) feedbackMessage = <p>Por favor, selecione um ficheiro de dados para começar.</p>;
+    else if (loading && selectedFileId) feedbackMessage = <p>A carregar dados do ficheiro selecionado...</p>;
+    else if (allData.length === 0 && !loading) feedbackMessage = <p>O ficheiro selecionado está vazio ou não contém dados válidos.</p>;
+    else if (availableIndicators.length === 0 && allData.length > 0) feedbackMessage = <p>Nenhum indicador numérico foi identificado no ficheiro.</p>;
+    else if (loadingMap) feedbackMessage = <p>A carregar mapa GeoJSON para Brasil...</p>;
+    else if (!geojson) feedbackMessage = <p>Não foi possível carregar o mapa GeoJSON para o Brasil.</p>;
+
+
+    // Lógica do mapa que renderiza TODOS os estados presentes no CSV para o ano selecionado
+    const mapBrazilChartData = useMemo(() => {
+        if (!geojson || !allData || allData.length === 0 || !selectedIndicator || !selectedYear) return null;
+
+        const dataForSelectedYear = allData.filter(item => item.ANO === selectedYear);
+        if (dataForSelectedYear.length === 0) return null;
+
+        const stateAverages = dataForSelectedYear.reduce((acc, item) => {
+            if (item.UF && item[selectedIndicator] !== undefined && item[selectedIndicator] !== null && !isNaN(item[selectedIndicator])) {
+                if (!acc[item.UF]) {
+                    acc[item.UF] = { sum: 0, count: 0 };
+                }
+                acc[item.UF].sum += item[selectedIndicator];
+                acc[item.UF].count += 1;
+            }
+            return acc;
+        }, {});
+
+        const avgByState = Object.keys(stateAverages).map(uf => ({
+            uf: uf,
+            average: stateAverages[uf].sum / stateAverages[uf].count,
+            nome: UF_CONFIGS[uf]?.nome || uf
+        }));
+
+        const municipalityDataMapForMap = new Map();
+        dataForSelectedYear.forEach(item => {
+            const stateAvg = avgByState.find(s => s.uf === item.UF)?.average;
+            if (stateAvg !== undefined) {
+                municipalityDataMapForMap.set(String(item.cod_mun_ibge_7), stateAvg);
+            }
+        });
+
+        const locations = [];
+        const zValues = [];
+        const textValues = [];
+
+        geojson.features.forEach(feature => {
+            const geoId = String(feature.properties[GEOJSON_ID_KEY]);
+            const stateAverageValue = municipalityDataMapForMap.get(geoId);
+            const municipioName = feature.properties.nome;
+            const ufCodeFromGeoId = String(geoId).substring(0, 2);
+            const ufConfigEntry = Object.entries(UF_CONFIGS).find(([key, config]) => config.ibgePrefix === ufCodeFromGeoId);
+            const ufNameInGeojson = ufConfigEntry ? UF_CONFIGS[ufConfigEntry[0]].nome : ufCodeFromGeoId;
+
+            locations.push(geoId);
+
+            if (stateAverageValue !== undefined && stateAverageValue !== null) {
+                zValues.push(stateAverageValue);
+                const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+                textValues.push(`${municipioName} (${ufNameInGeojson})<br>Média Estadual: ${stateAverageValue.toFixed(2)}`);
+            } else {
+                zValues.push(null);
+                textValues.push(`${municipioName} (${ufNameInGeojson})`);
+            }
+        });
+
+        if (locations.length === 0) return null;
+
+        return [{
+            type: 'choropleth',
+            geojson: geojson,
+            locations: locations,
+            z: zValues,
+            text: textValues,
+            hoverinfo: 'text',
+            featureidkey: `properties.${GEOJSON_ID_KEY}`,
+            colorscale: 'Viridis',
+            colorbar: { title: { text: `Média Estadual de<br>${INDICADORES_MAP[selectedIndicator] || selectedIndicator}`, side: 'right' }, len: 0.75, x: 0.95, y: 0.5 },
+            marker: { line: { color: 'white', width: 0.5 } },
+        }];
+    }, [geojson, allData, selectedIndicator, selectedYear]); // A dependência 'selectedUfs' foi removida
+
+    const mapBrazilTitle = useMemo(() => {
+        const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+        return `Média Estadual de ${indicatorLabel} (${selectedYear})`;
+    }, [selectedIndicator, selectedYear]);
+
+    // O restante dos useMemo para os outros gráficos (Ranking, Histórico, etc.) foram omitidos para brevidade, mas devem ser mantidos no seu arquivo.
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+        Visão Geral (Todos os Estados)
+        </h1>
+
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-wrap gap-4 items-center justify-center">
+        <label className="flex flex-col">
+        Arquivo de Dados:
+        <select value={selectedFileId} onChange={(e) => setSelectedFileId(e.target.value)} className="p-2 border rounded-md">
+        <option value="">Selecione um arquivo</option>
+        {filesForDropdown.map(file => (
+            <option key={file.id} value={file.id}>
+            {file.filename} (Upload: {new Date(file.uploaded_at).toLocaleDateString()})
+            </option>
+        ))}
+        </select>
+        </label>
+        <label className="flex flex-col">
+        Ano:
+        <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="p-2 border rounded-md">
+        {availableYears.map(year => (<option key={year} value={year}>{year}</option>))}
+        </select>
+        </label>
+        <label className="flex flex-col">
+        Indicador Principal:
+        <select value={selectedIndicator} onChange={(e) => setSelectedIndicator(e.target.value)} className="p-2 border rounded-md">
+        {availableIndicators.map(indicatorKey => (
+            <option key={indicatorKey} value={indicatorKey}>
+            {INDICADORES_MAP[indicatorKey] || indicatorKey}
+            </option>
+        ))}
+        </select>
+        </label>
+        </div>
+
+        {/* O bloco de filtro para selecionar UFs foi removido */}
+
+        {feedbackMessage && (
+            <div className="text-center p-4 bg-yellow-100 text-yellow-800 rounded-lg shadow-md mb-8">
+            {feedbackMessage}
+            </div>
+        )}
+
+        {!feedbackMessage && (
+            <div className="grid grid-cols-1 gap-6 mt-6">
+            <div className="bg-white p-4 rounded-lg shadow-md h-[600px] w-full">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Mapa do Brasil por Média Estadual</h2>
+            {mapBrazilChartData ? (
+                <Plot
+                data={mapBrazilChartData}
+                layout={{
+                    title: { text: mapBrazilTitle, font: { size: 20, color: '#333' }, xref: 'paper', x: 0.05, xanchor: 'left', yanchor: 'top' },
+                    geo: { scope: 'south america', showland: true, landcolor: 'rgb(243,243,243)', countrycolor: 'rgb(204,204,204)', projection: { type: 'mercator' }, fitbounds: false, center: { lat: -14, lon: -50 }, lataxis: { range: [-35, 5] }, lonaxis: { range: [-75, -30] }, visible: false, subunitcolor: 'rgb(204,204,243)', coastlinecolor: 'rgb(204,204,204)' },
+                                   margin: { t: 50, b: 20, l: 20, r: 20 }, autosize: true,
+                }}
+                config={{ responsive: true, displayModeBar: false }}
+                className="w-full h-full"
+                />
+            ) : (
+                <p className="text-center text-gray-500">Nenhum dado para exibir no mapa com os filtros atuais.</p>
+            )}
+            </div>
+            {/* Aqui entrariam os outros gráficos que também podem ser filtrados por 'selectedUfs' */}
+            </div>
+        )}
+        </div>
+    );
+};
+
+export default VisaoGeralPage;

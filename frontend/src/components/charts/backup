@@ -1,0 +1,175 @@
+// src/components/charts/MapaCoropleticoEstado.jsx
+
+import React, { useMemo, useState, useEffect } from 'react';
+import Plot from 'react-plotly.js';
+import { INDICADORES_MAP } from '../../config/indicadores'; // Ajuste o caminho se necessário
+
+const GEOJSON_ID_KEY = 'id'; // Chave da propriedade no GeoJSON para o ID do município
+
+const MapaCoropleticoEstado = ({ uf, data, selectedIndicator, ufConfig, selectedYear }) => {
+    const [geojson, setGeojson] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Efeito para buscar os dados GeoJSON da UF selecionada na sua API Django
+    useEffect(() => {
+        if (!uf) return;
+
+        const fetchGeojson = async () => {
+            setLoading(true);
+            setError(null);
+            // Sua API Django deve servir o GeoJSON em /api/geojson/<UF>/
+            const apiUrl = `/api/geojson/${uf.toUpperCase()}/`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Falha ao carregar GeoJSON para ${uf.toUpperCase()}: ${response.statusText}`);
+                }
+                const jsonData = await response.json();
+                setGeojson(jsonData);
+            } catch (err) {
+                console.error("Erro ao buscar GeoJSON:", err);
+                setError(`Não foi possível carregar o mapa para ${uf.toUpperCase()}. Detalhes: ${err.message}`);
+                setGeojson(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchGeojson();
+    }, [uf]); // Dependência: executa sempre que a UF muda
+
+    // Prepara os dados para o gráfico coroplético do Plotly
+    const plotData = useMemo(() => {
+        if (!geojson || !data || data.length === 0 || !selectedIndicator) {
+            return null; // Retorna nulo se os dados essenciais não estiverem disponíveis
+        }
+
+        // Filtra os dados para o ano selecionado
+        const dataForYear = data.filter(item => item.ano === selectedYear);
+
+        // Cria um mapa para acesso rápido aos valores do indicador por ID do município
+        const municipalityDataMap = new Map();
+        dataForYear.forEach(item => {
+            // Garante que o ID é uma string para correspondência consistente
+            municipalityDataMap.set(String(item.cod_mun_ibge_7), item[selectedIndicator]);
+        });
+
+        // Coleta IDs de municípios do GeoJSON e seus respectivos valores de indicador
+        const locations = []; // IDs dos municípios (cod_mun_ibge_7)
+    const zValues = [];   // Valores do indicador
+    const textValues = []; // Textos para exibir ao passar o mouse (tooltip)
+
+    geojson.features.forEach(feature => {
+        const geoId = String(feature.properties[GEOJSON_ID_KEY]);
+        const indicatorValue = municipalityDataMap.get(geoId);
+        // Assume que 'nome' é o nome do município no GeoJSON
+        const municipioName = feature.properties.nome;
+
+        if (indicatorValue !== undefined && indicatorValue !== null) {
+            locations.push(geoId);
+            zValues.push(indicatorValue);
+            // Formata o texto do tooltip
+            textValues.push(`${municipioName}<br>${INDICADORES_MAP[selectedIndicator] || selectedIndicator}: ${indicatorValue}`);
+        }
+    });
+
+    if (locations.length === 0) {
+        console.warn("Nenhum dado correspondente encontrado para o indicador e ano selecionados no GeoJSON. Verifique IDs e filtros de dados.");
+        return null;
+    }
+
+    return [{
+        type: 'choropleth',
+        geojson: geojson,
+        locations: locations, // IDs dos municípios
+        z: zValues,           // Valores para colorir o mapa
+        text: textValues,     // Conteúdo do tooltip
+        hoverinfo: 'text',    // Exibe apenas o texto do tooltip
+        featureidkey: `properties.${GEOJSON_ID_KEY}`, // Indica qual propriedade do GeoJSON usar como ID
+        colorscale: 'Viridis', // Escala de cores (outras opções: 'Blues', 'Greens', 'YlOrRd')
+    colorbar: {
+        title: {
+            text: INDICADORES_MAP[selectedIndicator] || selectedIndicator,
+            side: 'right'
+        },
+        len: 0.75, // Comprimento da barra de cores (relativo ao gráfico)
+    x: 0.95,   // Posição no eixo x (0 a 1)
+    y: 0.5,    // Posição no eixo y (0 a 1)
+    },
+    marker: {
+        line: {
+            color: 'white',
+            width: 0.5
+        }
+    },
+    }];
+    }, [data, selectedIndicator, geojson, selectedYear]); // Dependências: recalcula quando esses valores mudam
+
+    // Constrói o título dinâmico do mapa
+    const mapTitle = useMemo(() => {
+        const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+        const ufName = ufConfig?.nome || uf?.toUpperCase() || 'Estado';
+        return `Distribuição de ${indicatorLabel} em ${ufName} (${selectedYear})`;
+    }, [selectedIndicator, ufConfig, uf, selectedYear]); // Dependências do título
+
+    // Define a configuração de layout geográfico do mapa (zoom, centro)
+    const mapLayoutGeo = useMemo(() => {
+        const defaultLayout = {
+            scope: 'south america', // Escopo padrão, pode ser ajustado
+            showland: true,
+            landcolor: 'rgb(243,243,243)',
+                                 countrycolor: 'rgb(204,204,204)',
+                                 projection: {
+                                     type: 'mercator'
+                                 },
+                                 // Centro e zoom padrão se ufConfig não for fornecido
+                                 center: { lat: -10, lon: -55 }, // Centro genérico do Brasil
+                                 lataxis: { range: [-35, 5] },
+                                 lonaxis: { range: [-75, -30] },
+                                 subunitcolor: 'rgb(204,204,204)',
+                                 coastlinecolor: 'rgb(204,204,204)',
+        };
+
+        // Aplica zoom e centro específicos da UF se disponíveis
+        if (ufConfig && ufConfig.zoom && ufConfig.center) {
+            defaultLayout.center = ufConfig.center;
+            defaultLayout.zoom = ufConfig.zoom;
+        } else if (uf === 'BR') { // Ajuste para o Brasil se uma config específica não estiver disponível
+            defaultLayout.center = { lat: -14, lon: -50 };
+            defaultLayout.zoom = 2.5;
+        }
+        return defaultLayout;
+    }, [ufConfig, uf]); // Dependências do layout geográfico
+
+    // Mensagens de carregamento e erro
+    if (error) return <p className="text-red-500 text-center mt-4">Erro: {error}</p>;
+    if (!ufConfig) return <p className="text-gray-600 text-center mt-4">Aguardando configuração do mapa...</p>;
+    if (loading) return <p className="text-gray-600 text-center mt-4">Carregando mapa...</p>;
+    if (!geojson) return <p className="text-gray-600 text-center mt-4">Não foi possível carregar o mapa GeoJSON para {uf}.</p>;
+    if (!plotData) return <p className="text-gray-600 text-center mt-4">Mapa carregado, mas sem dados correspondentes para exibir com o indicador selecionado. Verifique o console para detalhes de debug.</p>;
+
+    return (
+        <div className="bg-white p-4 rounded-lg shadow-md h-[500px] flex flex-col justify-center items-center">
+        <Plot
+        data={plotData}
+        layout={{
+            title: {
+                text: mapTitle,
+                font: { size: 20, color: '#333' },
+                xref: 'paper',
+                x: 0.05, // Posição do título um pouco à esquerda
+                xanchor: 'left',
+                yanchor: 'top',
+            },
+            geo: mapLayoutGeo, // Aplica o layout geográfico configurado
+            margin: { t: 50, b: 20, l: 20, r: 20 }, // Ajusta as margens para acomodar o título e barra de cores
+            autosize: true, // Permite que o gráfico se ajuste ao tamanho do contêiner
+        }}
+        config={{ responsive: true, displayModeBar: false }} // Configurações adicionais do Plotly
+        className="w-full h-full" // Classes CSS para o contêiner do Plotly
+        />
+        </div>
+    );
+};
+
+export default MapaCoropleticoEstado;

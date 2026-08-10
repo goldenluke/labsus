@@ -1,0 +1,72 @@
+# Ambiente virtual
+venv/
+.venv/
+*.shp
+*.zip
+funcoes.txt
+shapefiles/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribuições / pacotes
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de banco de dados
+*.sqlite3
+
+# Arquivos de cobertura de teste
+.coverage
+htmlcov/
+.coverage.*
+
+# Pytest cache
+.pytest_cache/
+
+# Mypy cache
+.mypy_cache/
+
+# Pycharm
+.idea/
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# Celery
+celerybeat-schedule
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Outros
+*.env
+.env

@@ -1,0 +1,705 @@
+Iniciando a análise... A saída será exibida na tela e salva em 'analise_completa_datasus.txt'
+----------------------------------------------------------------------
+🔎 Analisando: CNES - Estabelecimentos
+----------------------------------------------------------------------
+[LOG] Definições de 'CNES - Estabelecimentos' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: STTO2301
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas do CNES (Estabelecimentos):
+['CNES', 'CODUFMUN', 'COD_CEP', 'CPF_CNPJ', 'PF_PJ', 'NIV_DEP', 'CNPJ_MAN', 'COD_IR', 'REGSAUDE', 'MICR_REG', 'DISTRSAN', 'DISTRADM', 'VINC_SUS', 'TPGESTAO', 'ESFERA_A', 'RETENCAO', 'ATIVIDAD', 'NATUREZA', 'CLIENTEL', 'TP_UNID', 'TURNO_AT', 'NIV_HIER', 'TP_PREST', 'CO_BANCO', 'CO_AGENC', 'C_CORREN', 'CONTRATM', 'DT_PUBLM', 'CONTRATE', 'DT_PUBLE', 'ALVARA', 'DT_EXPED', 'ORGEXPED', 'AV_ACRED', 'CLASAVAL', 'DT_ACRED', 'AV_PNASS', 'DT_PNASS', 'GESPRG1E', 'GESPRG1M', 'GESPRG2E', 'GESPRG2M', 'GESPRG4E', 'GESPRG4M', 'NIVATE_A', 'GESPRG3E', 'GESPRG3M', 'GESPRG5E', 'GESPRG5M', 'GESPRG6E', 'GESPRG6M', 'NIVATE_H', 'QTLEITP1', 'QTLEITP2', 'QTLEITP3', 'LEITHOSP', 'QTINST01', 'QTINST02', 'QTINST03', 'QTINST04', 'QTINST05', 'QTINST06', 'QTINST07', 'QTINST08', 'QTINST09', 'QTINST10', 'QTINST11', 'QTINST12', 'QTINST13', 'QTINST14', 'URGEMERG', 'QTINST15', 'QTINST16', 'QTINST17', 'QTINST18', 'QTINST19', 'QTINST20', 'QTINST21', 'QTINST22', 'QTINST23', 'QTINST24', 'QTINST25', 'QTINST26', 'QTINST27', 'QTINST28', 'QTINST29', 'QTINST30', 'ATENDAMB', 'QTINST31', 'QTINST32', 'QTINST33', 'CENTRCIR', 'QTINST34', 'QTINST35', 'QTINST36', 'QTINST37', 'CENTROBS', 'QTLEIT05', 'QTLEIT06', 'QTLEIT07', 'QTLEIT08', 'QTLEIT09', 'QTLEIT19', 'QTLEIT20', 'QTLEIT21', 'QTLEIT22', 'QTLEIT23', 'QTLEIT32', 'QTLEIT34', 'QTLEIT38', 'QTLEIT39', 'QTLEIT40', 'CENTRNEO', 'ATENDHOS', 'SERAP01P', 'SERAP01T', 'SERAP02P', 'SERAP02T', 'SERAP03P', 'SERAP03T', 'SERAP04P', 'SERAP04T', 'SERAP05P', 'SERAP05T', 'SERAP06P', 'SERAP06T', 'SERAP07P', 'SERAP07T', 'SERAP08P', 'SERAP08T', 'SERAP09P', 'SERAP09T', 'SERAP10P', 'SERAP10T', 'SERAP11P', 'SERAP11T', 'SERAPOIO', 'RES_BIOL', 'RES_QUIM', 'RES_RADI', 'RES_COMU', 'COLETRES', 'COMISS01', 'COMISS02', 'COMISS03', 'COMISS04', 'COMISS05', 'COMISS06', 'COMISS07', 'COMISS08', 'COMISS09', 'COMISS10', 'COMISS11', 'COMISS12', 'COMISSAO', 'AP01CV01', 'AP01CV02', 'AP01CV03', 'AP01CV04', 'AP01CV05', 'AP01CV06', 'AP01CV07', 'AP02CV01', 'AP02CV02', 'AP02CV03', 'AP02CV04', 'AP02CV05', 'AP02CV06', 'AP02CV07', 'AP03CV01', 'AP03CV02', 'AP03CV03', 'AP03CV04', 'AP03CV05', 'AP03CV06', 'AP03CV07', 'AP04CV01', 'AP04CV02', 'AP04CV03', 'AP04CV04', 'AP04CV05', 'AP04CV06', 'AP04CV07', 'AP05CV01', 'AP05CV02', 'AP05CV03', 'AP05CV04', 'AP05CV05', 'AP05CV06', 'AP05CV07', 'AP06CV01', 'AP06CV02', 'AP06CV03', 'AP06CV04', 'AP06CV05', 'AP06CV06', 'AP06CV07', 'AP07CV01', 'AP07CV02', 'AP07CV03', 'AP07CV04', 'AP07CV05', 'AP07CV06', 'AP07CV07', 'ATEND_PR', 'DT_ATUAL', 'COMPETEN', 'NAT_JUR']
+
+Total de colunas: 208
+
+
+======================================================================
+INICIANDO ANÁLISE DE TODOS OS AGRAVOS DO SINAN
+======================================================================
+
+Encontrados 49 agravos no SINAN.
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Acidente de trabalho com material biológico (ACBI)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Acidente de trabalho com material biológico (ACBI)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ACBIBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Acidente de trabalho com material biológico (ACBI):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_ACID', 'SEM_ACID', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'PERCUTANEA', 'PELE_INTEG', 'PELE_NAO_I', 'OUTRO_EXP', 'OUT_EXP_DE', 'MAT_ORG', 'MAT_ORG_DE', 'TIPO_ACID', 'AGENTE', 'LUVA', 'AVENTAL', 'OCULOS', 'MASCARA', 'FACIAL', 'BOTA', 'VACINA', 'ANTI_HIV', 'HBSAG', 'ANTI_HBS', 'ANTI_HCV', 'FONTE', 'FO_HBSAG', 'FO_ANT_HIV', 'FO_ANT_HBC', 'FO_ANT_HCV', 'SEM_QUIMIO', 'RECUSA_QUI', 'AZT3TC', 'AZT3TC_IND', 'AZT3TC_NFV', 'IMU_HEP_B', 'VAC_HEP_B', 'OUTRO_ARV', 'OUT_ARV_ES', 'EVOLUCAO', 'EVO_OUTR', 'DT_OBITO', 'CAT', 'MUCOSA']
+
+Total de colunas: 68
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Acidente de trabalho (ACGR)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Acidente de trabalho (ACGR)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ACGRBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Acidente de trabalho (ACGR):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_ACID', 'SEM_ACID', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'LOCAL_ACID', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'CNAE_PRIN', 'HORA_ACID', 'MIN_ACID', 'HORA_JOR', 'MIN_JOR', 'UF_ACID', 'MUN_ACID', 'CID_ACID', 'TIPO_ACID', 'MAIS_TRAB', 'NU_TRAB', 'ATENDE_MED', 'DT_ATENDE', 'UF_ATENDE', 'MUN_ATENDE', 'UNI_ATENDE', 'PART_CORP1', 'PART_CORP2', 'PART_CORP3', 'CID_LESAO', 'REGIME', 'EVOLUCAO', 'DT_OBITO', 'CAT']
+
+Total de colunas: 54
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Acidente por Animais Peçonhentos (ANIM)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Acidente por Animais Peçonhentos (ANIM)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ANIMBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Acidente por Animais Peçonhentos (ANIM):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_DT_ACI', 'ANT_UF', 'ANT_MUNIC_', 'ANT_TEMPO_', 'ANT_LOCA_1', 'MCLI_LOCAL', 'CLI_DOR', 'CLI_EDEMA', 'CLI_EQUIMO', 'CLI_NECROS', 'CLI_LOCAL_', 'CLI_LOCA_1', 'MCLI_SIST', 'CLI_NEURO', 'CLI_HEMORR', 'CLI_VAGAIS', 'CLI_MIOLIT', 'CLI_RENAL', 'CLI_OUTR_2', 'CLI_OUTR_3', 'CLI_TEMPO_', 'TP_ACIDENT', 'ANI_TIPO_1', 'ANI_SERPEN', 'ANI_ARANHA', 'ANI_LAGART', 'TRA_CLASSI', 'CON_SOROTE', 'NU_AMPOLAS', 'NU_AMPOL_1', 'NU_AMPOL_8', 'NU_AMPOL_6', 'NU_AMPOL_4', 'NU_AMPO_7', 'NU_AMPO_5', 'NU_AMPOL_9', 'NU_AMPOL_3', 'COM_LOC', 'COM_SECUND', 'COM_NECROS', 'COM_COMPOR', 'COM_DEFICT', 'COM_APUTAC', 'COM_SISTEM', 'COM_RENAL', 'COM_EDEMA', 'COM_SEPTIC', 'COM_CHOQUE', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA']
+
+Total de colunas: 75
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Atendimento Antirrabico (ANTR)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Atendimento Antirrabico (ANTR)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ANTRBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Atendimento Antirrabico (ANTR):
+['ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'ANT_CONTAT', 'ANT_ARRANH', 'ANT_LAMBED', 'ANT_MORDED', 'ANT_OUTRO_', 'ANT_MUCOSA', 'ANT_CABECA', 'ANT_MAOS', 'ANT_TRONCO', 'ANT_MEMBRO', 'ANT_MEMB_1', 'FERIMENTO', 'ANT_PROFUN', 'ANT_SUPERF', 'ANT_DILACE', 'ANT_DT_EXP', 'PRE_EXPOS', 'POS_EXPOS', 'TRA_ANTIGO', 'DOSES', 'ANIMAL', 'HERBIV_DES', 'OUTRO_DES', 'CONDIC_ANI', 'OBSERVACAO', 'TRAT_ATUAL', 'LAB_VACINA', 'LAB_VAC_DE', 'LOTE_VAC', 'DT_VENCIM', 'DT_DOSE_1', 'DT_DOSE_2', 'DT_DOSE_3', 'DT_DOSE_4', 'DT_DOSE_5', 'DT_VAC_1', 'DT_VAC_2', 'DT_VAC_3', 'DT_VAC_4', 'DT_VAC_5', 'FIM_ANIMAL', 'TRA_INTERR', 'TRA_MOTIVO', 'BUSCA_ATIV', 'REACAO_VAC', 'TRA_INDI_N', 'TRA_PESO', 'TRA_QTD_SO', 'TIP_SORO', 'TRA_INFILT', 'TRA_INFI_1', 'LAB_SORO', 'LAB_SOR_DE', 'TRA_NUM_PA', 'REACAO_SOR', 'DT_ENCERRA']
+
+Total de colunas: 76
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Botulismo (BOTU)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Botulismo (BOTU)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: BOTUBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Botulismo (BOTU):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'DTATEND', 'NUATEND', 'DTSUSPEIC', 'STHOSPITAL', 'DTINTERNA', 'DTALTA', 'STFEBRE', 'STNAUSEA', 'STVOMITO', 'STDIARREIA', 'STCONSTIPA', 'STCEFALEIA', 'STTONTURA', 'STVISAO', 'STDIPLOPIA', 'STDISARTRI', 'STDISFONIA', 'STDISFAGIA', 'STBOCA', 'STFERIMENT', 'STFLACIDEZ', 'STDISPNEIA', 'STRESPIRA', 'STCARDIACA', 'STCOMA', 'STPARESTES', 'STOUTROSIN', 'STPTOSE', 'STOFTALMO', 'STMIDRIASE', 'STFACIAL', 'STBULBAR', 'STMEMINF', 'STMEMSUP', 'STDESCENDE', 'STSIMETRIC', 'STSENSIVEL', 'TPNEURO', 'STALIMENTO', 'DSALIMENTO', 'STCASEIRA', 'STCOMERCIO', 'STEXPALIM', 'STDOMICILI', 'STESCOLA', 'STTRABALHO', 'STRESTAURA', 'STFESTA', 'STOUTROLOC', 'NUCONSOME', 'STSORO', 'STANTIBIO', 'STOUTROTRA', 'DTSORO', 'STANTIBOTU', 'STSOROMAT', 'DTSOROCOL', 'STFEZESMAT', 'DTFEZESCOL', 'STELETRO', 'DTELETRO', 'CLASSI_FIN', 'AGENTE_OUT', 'CRITERIO', 'TPBOTULISM', 'STCLINICA', 'STBROMATO', 'TPCLINICA', 'TPBROMATO', 'DSCAUSALIM', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRNASRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'STVENTILA', 'UF_HOSP', 'MUN_HOSP', 'DS_PARES', 'DS_OUTROSI', 'DS_INDUS', 'DS_INGEST', 'DS_INI_GES', 'DS_FIM_GES', 'DS_OUTR_LO', 'UF_ING', 'MUN_ING', 'DS_TRAT', 'STSORORES', 'TPSOROTOX', 'STFEZESRES', 'TPFEZESTOX', 'ST_ALI1COL', 'DS_ALI1OUT', 'DT_ALI1COL', 'RESALIM1', 'TP_ALI1TOX', 'ST_ALI2COL', 'DS_ALI2OUT', 'DT_ALI2COL', 'ST_ALI2RES', 'TP_ALI2TO', 'TP_COLOUT', 'DS_OUTRO', 'DT_COLOUT', 'RESALIMOUT', 'TP_TOXOUTR', 'TP_LIQUOR', 'NU_CELULA', 'NU_PROTEI', 'DT_LIQUOR', 'TP_SENSITI', 'TP_MOTORA', 'TP_REPETE', 'DS_ALI1', 'DS_ALI2', 'DS_LOCAL1', 'DS_LOCAL2']
+
+Total de colunas: 149
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Cancêr relacionado ao trabalho (CANC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Cancêr relacionado ao trabalho (CANC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: CANCBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Cancêr relacionado ao trabalho (CANC):
+['TP_NOT', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'ID_AGRAVO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'DIAG_ESP', 'ASBESTO', 'SILICA', 'AMINA', 'BENZENO', 'ALCATRAO', 'HIDROCARBO', 'OLEOS', 'BERILIO', 'CADMIO', 'CROMO', 'NIQUEL', 'IONIZANTES', 'NAO_IONIZA', 'HORMONIO', 'NEOPLASICO', 'OUTRO_EXP', 'FUMA', 'TEMPO_FUMA', 'TP_TEMP_FU', 'TRAB_DOE', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'OUT_EXP_DE', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRNASRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 66
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Doença de Chagas Aguda (CHAG)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Doença de Chagas Aguda (CHAG)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: CHAGBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Doença de Chagas Aguda (CHAG):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_UF_1', 'MUN_1', 'ANT_UF_2', 'MUN_2', 'ANT_UF_3', 'MUN_3', 'PRESENCA', 'PARASITO', 'HISTORIA', 'CONTROLE', 'MANIPULA', 'MAECHAGA', 'ORAL', 'ASSINTOMA', 'EDEMA', 'MENINGOE', 'POLIADENO', 'FEBRE', 'HEPATOME', 'SINAIS_ICC', 'ARRITMIAS', 'ASTENIA', 'ESPLENOM', 'CHAGOMA', 'OUTRO_SIN', 'OUTRO_ESP', 'DT_COL_DIR', 'EXAME', 'MICRO_HEMA', 'OUTRO', 'DT_COL_IND', 'XENODIAG', 'HEMOCULT', 'DT_COL_S1', 'DT_COL_S2', 'ELI_IGM_S1', 'ELI_IGG_S1', 'ELI_IGM_S2', 'ELI_IGG_S2', 'HEM_IGM_S1', 'HEM_IGG_S1', 'HEM_IGM_S2', 'HEM_IGG_S2', 'IMU_IGM_S1', 'TIT_IGM_S1', 'IMU_IGM_S2', 'TIT_IGM_S2', 'IMU_IGG_S1', 'TIT_IGG_S1', 'IMU_IGG_S2', 'TIT_IGG_S2', 'RESUL_HIS', 'RES_HIST', 'ESPECIFICO', 'SINTOMATIC', 'DROGA', 'TEMPO', 'CON_TRIAT', 'BIOSSEG', 'FISCALIZA', 'MED_OUTRO', 'OUTRO_DES', 'CLASSI_FIN', 'CRITERIO', 'EVOLUCAO', 'DT_OBITO', 'CON_PROVAV', 'CON_OUTRA', 'CON_LOCAL', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 108
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Febre de Chikungunya (CHIK)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Febre de Chikungunya (CHIK)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: CHIKBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Febre de Chikungunya (CHIK):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'FEBRE', 'MIALGIA', 'CEFALEIA', 'EXANTEMA', 'VOMITO', 'NAUSEA', 'DOR_COSTAS', 'CONJUNTVIT', 'ARTRITE', 'ARTRALGIA', 'PETEQUIA_N', 'LEUCOPENIA', 'LACO', 'DOR_RETRO', 'DIABETES', 'HEMATOLOG', 'HEPATOPAT', 'RENAL', 'HIPERTENSA', 'ACIDO_PEPT', 'AUTO_IMUNE', 'DT_CHIK_S1', 'DT_CHIK_S2', 'DT_PRNT', 'RES_CHIKS1', 'RES_CHIKS2', 'RESUL_PRNT', 'DT_SORO', 'RESUL_SORO', 'DT_NS1', 'RESUL_NS1', 'DT_VIRAL', 'RESUL_VI_N', 'DT_PCR', 'RESUL_PCR_', 'SOROTIPO', 'HISTOPA_N', 'IMUNOH_N', 'HOSPITALIZ', 'DT_INTERNA', 'UF', 'MUNICIPIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'CLASSI_FIN', 'CRITERIO', 'DOENCA_TRA', 'CLINC_CHIK', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'ALRM_HIPOT', 'ALRM_PLAQ', 'ALRM_VOM', 'ALRM_SANG', 'ALRM_HEMAT', 'ALRM_ABDOM', 'ALRM_LETAR', 'ALRM_HEPAT', 'ALRM_LIQ', 'DT_ALRM', 'GRAV_PULSO', 'GRAV_CONV', 'GRAV_ENCH', 'GRAV_INSUF', 'GRAV_TAQUI', 'GRAV_EXTRE', 'GRAV_HIPOT', 'GRAV_HEMAT', 'GRAV_MELEN', 'GRAV_METRO', 'GRAV_SANG', 'GRAV_AST', 'GRAV_MIOC', 'GRAV_CONSC', 'GRAV_ORGAO', 'DT_GRAV', 'MANI_HEMOR', 'EPISTAXE', 'GENGIVO', 'METRO', 'PETEQUIAS', 'HEMATURA', 'SANGRAM', 'LACO_N', 'PLASMATICO', 'EVIDENCIA', 'PLAQ_MENOR', 'CON_FHD', 'COMPLICA', 'NU_LOTE_I', 'TP_SISTEMA', 'NDUPLIC_N', 'DT_DIGITA', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W']
+
+Total de colunas: 122
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Cólera (COLE)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Cólera (COLE)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+⚠️ Nenhum arquivo encontrado para 'SINAN - Cólera (COLE)'. Pulando.
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Coqueluche (COQU)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Coqueluche (COQU)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: COQUBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Coqueluche (COQU):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_SENTIN', 'FC_CONTATO', 'OUT_CONTAT', 'CS_VAC_N', 'DT_ULT_DOS', 'DT_CATARRA', 'CS_TOSSE_E', 'CS_TOSSE_P', 'CS_CRISE', 'CS_CIANOSE', 'CS_VOMITOS', 'CS_APNEIA', 'CS_TEMP37', 'CS_TEMP_38', 'CS_OUT_SIN', 'NM_OUT_SIN', 'CS_PNEUMON', 'CS_ENCEFAL', 'CS_DESITRA', 'CS_OTITE', 'CS_DESNUTR', 'CS_OUT_COM', 'NM_OUT_COM', 'CS_HOSPITA', 'DT_INTERNA', 'COD_UF_HOS', 'COD_MUN_HO', 'CS_ANTIBIO', 'DT_ADM_ANT', 'CS_COLETA', 'DT_COLETA', 'CS_CULTURA', 'MED_IDEN_C', 'MED_QUAN_C', 'MED_CASO_S', 'COLET_COMU', 'QUAN_COMUN', 'QUAN_POSIT', 'MED_BLOQUE', 'CLASSI_FIN', 'CRITERIO', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'NU_LOTE_I']
+
+Total de colunas: 82
+
+
+---
+[AVISO] Pulando o agravo 'DENG' (Dengue) conforme solicitado.
+---
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Dermatoses ocupacionais (DERM)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Dermatoses ocupacionais (DERM)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: DERMBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Dermatoses ocupacionais (DERM):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'HIPERTEN', 'TUBE', 'DIABETES', 'ASMA', 'HANSENIASE', 'MENTAL', 'OUT_AGRAVO', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'AGENTE', 'LESAO', 'EPICUTA', 'DIAG_ESP', 'AFASTAMENT', 'NU_AFAST', 'TP_AFAST', 'EVOL_AFAST', 'TRAB_DOE', 'AFAST_RISC', 'INDIVIDUAL', 'MUDA_TRAB', 'NENHUM', 'COLETIVA', 'AFAST_TRAB', 'CONDUTA', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'AGRAVO_DES', 'AGENTE_DES', 'LESAO_DES', 'CONDUT_DES', 'NU_LOTE_I']
+
+Total de colunas: 63
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Difteria (DIFT)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Difteria (DIFT)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: DIFTBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Difteria (DIFT):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_TIPOCO', 'ANT_OUTROS', 'ANT_DOS_N', 'ANT_ULTI_D', 'CLI_EDEMAG', 'CLI_PESCOC', 'CLI_FEBRE', 'CLI_PROSTR', 'CLI_PSEUDO', 'CLI_PALIDE', 'CLI_TEMPER', 'CLI_CAVIDA', 'CLI_AMIGDA', 'CLI_CORDAO', 'CLI_FARING', 'CLI_LARING', 'CLI_ORGAOS', 'CLI_PALATO', 'CLI_CONDUT', 'CLI_TRAQUE', 'CLI_PELE', 'CLI_CONJUN', 'CLI_MIOCAR', 'CLI_NEFRIT', 'CLI_PARALB', 'CLI_PARALP', 'CLI_ARRITM', 'CLI_PARALM', 'CLI_OUTRAS', 'CLI_ESPECI', 'ATE_HOSPIT', 'ATE_INTERN', 'ATE_UF_INT', 'ATE_MUNICI', 'LAB_MATE_N', 'LAB_DATA_C', 'LAB_CULTUR', 'LAB_PROVAS', 'TRA_DATA_S', 'TRA_ANTIBI', 'TRA_DATA_A', 'MED_IDEN_C', 'MED_QUAN_C', 'MED_CASO_S', 'MED_MATERI', 'MED_QUAN_M', 'MED_QUAN_P', 'MED_PREVEN', 'CLASSI_FIN', 'CRITERIO', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'NU_LOTE_I']
+
+Total de colunas: 91
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Esquistossomose (ESQU)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Esquistossomose (ESQU)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ESQUBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Esquistossomose (ESQU):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'DT_COPRO', 'AN_QUANT', 'OUTROS', 'TRATAM', 'TRATANAO', 'STCURA1', 'STCURA2', 'STCURA3', 'FORMA', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'NOPROPIN', 'NOCOLINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRS', 'DT_TRANSSE', 'DT_OBITO', 'DS_FORMA', 'AN_QUALI', 'DTTRAT', 'DT_RESU3', 'OUTRO_EX']
+
+Total de colunas: 53
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Doença exantemáticas (EXAN)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Doença exantemáticas (EXAN)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: EXANBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Doença exantemáticas (EXAN):
+['TP_NOT', 'ID_AGRAVO', 'CS_SUSPEIT', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'CS_VACINA', 'DT_DOSE_N', 'CS_FONTE', 'DT_INICIO_', 'DT_FEBRE', 'ID_TOSSE', 'ID_CORIZA', 'ID_CONJUNT', 'ID_ARTRALG', 'ID_GANGLIO', 'ID_RETRO', 'ID_HOSPIT', 'DT_INTERNA', 'UF_H', 'NM_MUN_HOS', 'DT_COL_1', 'DT_COL_2', 'ID_S1_IGM', 'ID_S1_IGG', 'ID_S1_IGM_', 'ID_S1_IGG_', 'ID_S1_IG_1', 'ID_S1_IG_2', 'ID_S2_IGM', 'ID_S2_IGG', 'ID_S2_IGM_', 'ID_S2_IGG_', 'ID_S2_IG_1', 'ID_S2_IG_2', 'ID_RE_IGM', 'ID_RE_IGG', 'ID_RE_IGM_', 'ID_RE_IGG_', 'ID_RE_IG_1', 'ID_RE_IG_2', 'TPEXANTE', 'ID_SANGUE', 'ID_URINA', 'ID_SECRECA', 'ID_LIQUOR', 'ID_ETIOLOG', 'ETIOL_OUTR', 'CS_VACINAL', 'MENOR_5ANO', 'DE5A14ANOS', 'DE15A39ANO', 'INT_TEMPO', 'CLASSI_FIN', 'CRITERIO', 'CS_DESCART', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DESC1', 'DT_DESC2', 'DT_DESC3', 'CO_UF_DES1', 'CO_UF_DES2', 'CO_UF_DES3', 'MUN_DES1', 'MUN_DES2', 'MUN_DES3', 'PA_DES1', 'PA_DES2', 'PA_DES3', 'DS_TRANS1', 'DS_TRANS2', 'DS_TRANS3']
+
+Total de colunas: 107
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Febre Maculosa (FMAC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Febre Maculosa (FMAC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: FMACBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Febre Maculosa (FMAC):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'FEBRE', 'CEFALEIA', 'ABDOMINAL', 'MIALGIA', 'NAUSEA', 'EXANTEMA', 'DIARREIA', 'ICTERICIA', 'HIPEREMIA', 'HEPATOME', 'PETEQUIAS', 'HEMORRAG', 'LINFADENO', 'CONVULSAO', 'NECROSE', 'PROSTACAO', 'CHOQUE', 'COMA', 'HEMORRAGI', 'RESPIRATO', 'OLIGURIA', 'OUTROS', 'OUTRO_ESP', 'CARRAPATO', 'CAPIVARA', 'CAO_GATO', 'BOVINO', 'EQUINOS', 'OUTROANI', 'ANIM_ESP', 'FOI_MATA', 'HOSPITAL', 'DTINTERNA', 'DTALTA', 'COUFHOSP', 'DIAGNO_LAB', 'DTS1', 'DTS2', 'IGM_S1', 'TIT_IGM_S1', 'IGG_S1', 'TIT_IGG_S1', 'IGM_S2', 'TIT_IGM_S2', 'IGG_S2', 'TIT_IGG_S2', 'DT_COLETA', 'DT_DIGITA', 'ISOLAMENTO', 'AGENTE', 'HISTOPATO', 'IMUNOHIST', 'CLASSI_FIN', 'CRITERIO', 'DIAG_DESCA', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'AMBIENTE', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'IDENT_MICR']
+
+Total de colunas: 95
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Febre Tifóide (FTIF)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Febre Tifóide (FTIF)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: FTIFBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Febre Tifóide (FTIF):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'CONTATO', 'CONT_OUT', 'SUGE_VINCU', 'VINC_OUT', 'ASSINTOMAT', 'FEBRE', 'CEFALEIA', 'DIARREIA', 'CONSTIPA', 'ASTENIA', 'TOSSE', 'ESPLENO', 'TIFICA', 'NAUSEAS', 'VOMITOS', 'DOR', 'PULSO', 'ENTERO', 'PERFURA', 'COMP_OUT', 'COMP_OUT_D', 'ATENDIMENT', 'DT_ATENDE', 'UF', 'MUNICIPIO', 'SANGUE', 'FEZES', 'URINA', 'ANTIBIOTIC', 'DT_HEMO1', 'HEMO_R1', 'HEMO_D_1', 'DT_HEMO2', 'HEMO_R2', 'HEMO_D_2', 'DT_HEMO3', 'HEMO_R3', 'HEMO_D_3', 'DT_URO', 'URO_R1', 'URO_D', 'DT_URO2', 'URO_R2', 'URO_D_2', 'DT_URO3', 'URO_R3', 'URO_D_3', 'DT_COPRO1', 'COPRO_R1', 'COPRO_D_1', 'DT_COPRO2', 'COPRO_R2', 'COPRO_D_2', 'DT_COPRO3', 'COPRO_R3', 'COPRO_D_3', 'DT_OUTR1', 'OUTR_R1', 'OUTR_D1', 'DT_OUTR2', 'OUTR_R2', 'OUTR_D2', 'DT_OUTR3', 'OUTR_R3', 'OUTR_D3', 'CLORAFEN', 'AMPICILINA', 'SULFA', 'QUINOLONA', 'ANT_OUTR', 'ANT_OUT_D', 'DIAS', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'NU_LOTE_I', 'DT_DESC1', 'DT_DESC2', 'DT_DESC3', 'CO_UF_DES1', 'CO_UF_DES2', 'CO_UF_DES3', 'MUN_DES1', 'MUN_DES2', 'MUN_DES3', 'PA_DES1', 'PA_DES2', 'PA_DES3', 'DS_TRANS1', 'DS_TRANS2', 'DS_TRANS3']
+
+Total de colunas: 130
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Hanseníase (HANS)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Hanseníase (HANS)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: HANSBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Hanseníase (HANS):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'ID_OCUPA_N', 'NU_LESOES', 'FORMACLINI', 'AVALIA_N', 'CLASSOPERA', 'MODOENTR', 'MODODETECT', 'BACILOSCOP', 'DTINICTRAT', 'ESQ_INI_N', 'CONTREG', 'NERVOSAFET', 'UFATUAL', 'ID_MUNI_AT', 'DT_NOTI_AT', 'ID_UNID_AT', 'UFRESAT', 'MUNIRESAT', 'DTULTCOMP', 'CLASSATUAL', 'AVAL_ATU_N', 'ESQ_ATU_N', 'DOSE_RECEB', 'EPIS_RACIO', 'DTMUDESQ', 'CONTEXAM', 'DTALTA_N', 'TPALTA_N', 'IN_VINCULA', 'NU_LOTE_IA']
+
+Total de colunas: 63
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Hantavirose (HANT)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Hantavirose (HANT)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: HANTBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Hantavirose (HANT):
+['TP_NOT', 'ID_AGRAVO', 'CS_SUSPEIT', 'IN_AIDS', 'CS_MENING', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'DTDIASINAC', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'TREINA_MIL', 'DESMATA_N', 'EXPO_N', 'MOAGEM_N', 'DORMIU_N', 'TRANSPO_N', 'PESCOU_N', 'ROEDOR_N', 'OUTRA_ATIV', 'OUTR_ATI_D', 'CLI_DT_ATE', 'CLI_FEBRE', 'CLI_TOSSE', 'CLI_DISPNE', 'CLI_RESPI', 'CLI_CEFALE', 'CLI_MIAL_G', 'CLI_LOMBAR', 'CLI_ABDOMI', 'CLI_HIPOTE', 'CLI_CHOQUE', 'CLI_VOMITO', 'CLI_DIARRE', 'CLI_TORACI', 'CLI_TONTUR', 'CLI_CARDIA', 'CLI_RENAL', 'CLI_NEUROL', 'CLI_ASTENI', 'CLI_PETEQU', 'CLI_HEMO', 'CLI_H_DESC', 'CLI_OUTROS', 'CLI_OUT_D', 'AM_SANGUE', 'LAB_HEMA_N', 'LAB_TROMBO', 'LAB_ATIPIC', 'LAB_UREIA', 'LAB_TGO', 'LAB_TGO_D', 'LAB_TGP', 'LAB_TGP_D', 'LAB_RES_B', 'LAB_RADIOL', 'LAB_DIFUSO', 'LAB_LOCAL', 'LAB_DERRAM', 'LAB_COLHEU', 'DT_COL_IGM', 'LAB_IGM_R', 'LAB_IMUNO', 'DT_RTPCR', 'LAB_RTPCR', 'TRA_HOSP', 'TRA_DT_INT', 'TRA_UF', 'TRA_MUNICI', 'TRA_MECANI', 'TRA_ANTIVI', 'TRA_CORTIC', 'TRA_CPAP', 'TRA_VASOAT', 'TRA_ANTIBI', 'TRA_TRATAM', 'TRA_ESPECI', 'CLASSI_FIN', 'CON_FORMA', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'CON_AMBIEN', 'CON_AMB_DE', 'CON_LOCALI', 'CON_LOCAL2', 'EVOLUCAO', 'DT_EVOLUC', 'CON_AUTOPS', 'DOENCA_TRA', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRNASRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 118
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Hepatites Virais (HEPA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Hepatites Virais (HEPA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: HEPABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Hepatites Virais (HEPA):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_DIAG', 'SEM_DIAG', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'HEPATITE_N', 'HEPATITA', 'HEPATITB', 'INSTITUCIO', 'HIV', 'OUTRA_DST', 'SEXUAL', 'DOMICILI', 'OCUPACIO', 'MEDICAMENT', 'TATU_PIER', 'MATBIOLOGI', 'INAL_CRACK', 'ACUPUNTURA', 'TRANSFUSAO', 'INJETAVEIS', 'CIRURGICO', 'AGUA_ALIME', 'DENTARIO', 'TRESMAIS', 'HEMODIALIS', 'TRANSPLA', 'OUTRAS', 'DT_ACIDENT', 'CO_UF_EXP', 'CO_MUN_EXP', 'CO_UF_EX2', 'CO_MUN_EX2', 'CO_UF_EX3', 'CO_MUN_EX3', 'BANCOSANGU', 'RES_HBSAG', 'RE_ANTIHBC', 'RE_ANTIHCV', 'DT_COLETA', 'ANTIHAVIGM', 'ANTIHBS', 'ANTIHDVIGM', 'AGHBS', 'AGHBE', 'ANTIHEVIGM', 'ANTIHBCIGM', 'ANTIHBE', 'ANTIHCV', 'HBC_TOTAL', 'ANTIHDV', 'TP_SOROHCV', 'GEN_VHC', 'COLETAMARC', 'FONTE', 'DT_ENCERRA', 'DSFONTE', 'CLASSI_FIN', 'FORMA', 'HAV', 'HBV', 'HCV', 'HDV', 'HEV']
+
+Total de colunas: 80
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Intoxicação Exógena (IEXO)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Intoxicação Exógena (IEXO)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: IEXOBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Intoxicação Exógena (IEXO):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'SIT_TRAB', 'LOC_EXPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'PAIS_EXP', 'AGENTE_TOX', 'COAGTOXMA1', 'COAGTOXMA2', 'COAGTOXMA3', 'AGENTE_1', 'AGENTE_2', 'AGENTE_3', 'P_ATIVO_1', 'P_ATIVO_2', 'P_ATIVO_3', 'UTILIZACAO', 'ATIVIDA_1', 'ATIVIDA_2', 'ATIVIDA_3', 'VIA_1', 'VIA_2', 'VIA_3', 'CIRCUNSTAN', 'DOENCA_TRA', 'TPEXP', 'NUTEMPO', 'TPTEMPO', 'TPATENDE', 'HOSPITAL', 'DTINTERNA', 'UF_HOSP', 'MUN_HOSP', 'CLASSI_FIN', 'DIAG_CONF', 'CRITERIO', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'TRAB_DESC', 'LOC_EXP_DE', 'OUT_AGENTE', 'UTIL_DESC', 'LAVOURA', 'CIRCUN_DES', 'NU_LOTE_I', 'INTOX_CHUM', 'INTOX_MERC', 'INTOX_META']
+
+Total de colunas: 82
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Influenza Pandêmica (INFL)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Influenza Pandêmica (INFL)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+⚠️ Nenhum arquivo encontrado para 'SINAN - Influenza Pandêmica (INFL)'. Pulando.
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Leishmaniose Visceral (LEIV)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Leishmaniose Visceral (LEIV)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: LEIVBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Leishmaniose Visceral (LEIV):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'FEBRE', 'FRAQUEZA', 'EDEMA', 'EMAGRA', 'TOSSE', 'PALIDEZ', 'BACO', 'INFECCIOSO', 'FEN_HEMORR', 'FIGADO', 'ICTERICIA', 'OUTROS', 'OUTROS_ESP', 'HIV', 'DIAG_PAR_N', 'IFI', 'OUTRO', 'ENTRADA', 'TRATAMENTO', 'DROGA', 'PESO', 'DOSE', 'AMPOLAS', 'FALENCIA', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DESLC1', 'DS_MUN_1', 'CO_UF_1', 'CO_PAIS_1', 'DS_TRANS_1', 'DT_DESLC2', 'DS_MUN_2', 'CO_UF_2', 'CO_PAIS_2', 'DS_TRANS_2', 'DT_DESLC3', 'DS_MUN_3', 'CO_UF_3', 'CO_PAIS_3']
+
+Total de colunas: 76
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Leptospirose (LEPT)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Leptospirose (LEPT)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: LEPTBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Leptospirose (LEPT):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_CB_LAM', 'ANT_CB_CRI', 'ANT_CB_CAI', 'ANT_CB_FOS', 'ANT_CB_SIN', 'ANT_CB_PLA', 'ANT_CB_COR', 'ANT_CB_ROE', 'ANT_CB_GRA', 'ANT_CB_TER', 'ANT_CB_LIX', 'ANT_CB_OUT', 'ANT_OU_DES', 'ANT_HUMANO', 'ANT_ANIMAI', 'CLI_DT_ATE', 'CLI_FEBRE', 'CLI_MIALGI', 'CLI_CEFALE', 'CLI_PROST', 'CLI_CONGES', 'CLI_PANTUR', 'CLI_VOMITO', 'CLI_DIARRE', 'CLI_ICTERI', 'CLI_RENAL', 'CLI_RESPIR', 'CLI_CARDIA', 'CLI_HEMOPU', 'CLI_HEMORR', 'CLI_MENING', 'CLI_OUTROS', 'CLI_OTRDES', 'ATE_HOSP', 'ATE_DT_INT', 'ATE_DT_ALT', 'ATE_UF', 'ATE_MUNICI', 'LAB_DT_1', 'LAB_ELIS_1', 'LAB_DT_2', 'LAB_ELIS_2', 'DTMICRO1', 'MICRO1_S1', 'MICRO1_T_1', 'MICRO1_S_2', 'MICRO1_T_2', 'LAB_MICR_1', 'DTMICRO2', 'MICRO2_S1', 'MICRO2_T_1', 'MICRO2_S_2', 'MICRO2_T_2', 'LAB_MICR_2', 'DTISOLA', 'RES_ISOL', 'DTIMUNO', 'RES_IMUNO', 'DT_PCR', 'RES_PCR', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'CON_AMBIEN', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_RISCO1', 'DT_RISCO2', 'DT_RISCO3', 'DT_RISCO4', 'CO_MUN_R1', 'CO_MUN_R2', 'CO_MUN_R3', 'CO_MUN_R4', 'CO_UF_R1', 'CO_UF_R2', 'CO_UF_R3', 'CO_UF_R4', 'NU_LOTE_I']
+
+Total de colunas: 120
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - LER/Dort (LERD)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - LER/Dort (LERD)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: LERDBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - LER/Dort (LERD):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'HIPERTEN', 'TUBE', 'DIABETES', 'ASMA', 'HANSENIASE', 'MENTAL', 'OUT_AGRAVO', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'SENSIBILI', 'LIMITA_MOV', 'MUSCULAR', 'FLOGISTICO', 'MENOS_MOV', 'DOR', 'OUTRO_SIN', 'TAREFAS', 'PREMIOS', 'HA_PAUSA', 'REPETITIVO', 'MAIS_6HS', 'STRESS', 'DIAG_ESP', 'AFASTAMENT', 'NU_AFAST', 'TP_AFAST', 'EVOL_AFAST', 'TRAB_DOE', 'AFAST_RISC', 'INDIVIDUAL', 'MUDA_TRAB', 'NENHUM', 'COLETIVA', 'AFAST_TRAB', 'CONDUTA', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'AGRAVO_DES', 'SINTO_DES', 'CONDUT_DES', 'NU_LOTE_I']
+
+Total de colunas: 72
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Leishmaniose Tegumentar Americana (LTAN)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Leishmaniose Tegumentar Americana (LTAN)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: LTANBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Leishmaniose Tegumentar Americana (LTAN):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'CLI_CUTANE', 'CLI_MUCOSA', 'CLI_CICATR', 'CLI_CO_HIV', 'LAB_PARASI', 'LAB_IRM', 'LAB_HISTOP', 'CLA_TIPO_N', 'CLAS_FORMA', 'DT_INIC_TR', 'TRA_DROGA_', 'TRA_PESO', 'TRA_DOSE', 'TRA_AMPOLA', 'TRA_OUTR_N', 'CRITERIO', 'CON_CLASS_', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'NU_LOTE_I', 'DT_DESC1', 'DT_DESC2', 'DT_DESC3', 'CO_UF_DES1', 'CO_UF_DES2', 'CO_UF_DES3', 'MUN_DES1', 'MUN_DES2', 'MUN_DES3', 'PA_DES1', 'PA_DES2', 'PA_DES3']
+
+Total de colunas: 74
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Malária (MALA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Malária (MALA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: MALABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Malária (MALA):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'AT_ATIVIDA', 'AT_LAMINA', 'AT_SINTOMA', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'LOC_INF', 'DEXAME', 'RESULT', 'PMM', 'PCRUZ', 'TRA_ESQUEM', 'DSTRAESQUE', 'DTRATA', 'NU_LOTE_I', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 50
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Meningite (MENI)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Meningite (MENI)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: MENIBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Meningite (MENI):
+['TP_NOT', 'ID_AGRAVO', 'CS_MENING', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'ANT_AC', 'ANT_DOSE_3', 'ANT_DTUL_3', 'ANT_BC', 'ANT_DOSES_', 'ANT_DTULT_', 'ANT_CONJ_C', 'ANT_DOSE_C', 'ANT_DTUL_C', 'ANT_BCG', 'ANT_DOSE_4', 'ANT_DTUL_4', 'ANT_TRIPLI', 'ANT_DOSE_5', 'ANT_DTUL_5', 'ANT_HEMO_T', 'ANT_DOSE_T', 'ANT_DTUL_T', 'ANT_PNEUMO', 'ANT_DOSE_7', 'ANT_DTUL_7', 'ANT_OUTRA', 'ANT_OU_DE', 'ANT_DTUL_8', 'ANT_AIDS', 'ANT_IMUNO', 'ANT_IRA', 'ANT_TUBE', 'ANT_TRAUMA', 'ANT_INF_HO', 'ANT_OUTRO', 'ANT_OUTR_D', 'ANT_CONT_N', 'ANT_SECUND', 'CLI_CEFALE', 'CLI_FEBRE', 'CLI_VOMITO', 'CLI_CONVUL', 'CLI_RIGIDE', 'CLI_KERNIG', 'CLI_ABAULA', 'CLI_COMA', 'CLI_PETEQU', 'CLI_OUTRAS', 'CLI_ESPECI', 'ATE_HOSPIT', 'ATE_INTERN', 'ATE_UF_HOS', 'ATE_MUNICI', 'LAB_PUNCAO', 'LAB_DTPUNC', 'LAB_ASPECT', 'LAB_CTLIQU', 'LAB_CTLESA', 'LAB_CTSANG', 'LAB_CTESCA', 'LAB_BCLIQU', 'LAB_BCLESA', 'LAB_BCSANG', 'LAB_BCESCA', 'LAB_CILIQU', 'LAB_CISANG', 'LAB_AGLIQU', 'LAB_AGSANG', 'LAB_ISLIQU', 'LAB_ISFEZE', 'LAB_PCLIQU', 'LAB_PCLESA', 'LAB_PCSANG', 'LAB_PCESCA', 'CLASSI_FIN', 'CON_DIAGES', 'CLA_ME_BAC', 'CLA_ME_ASS', 'CLA_ME_ETI', 'CRITERIO', 'CLA_SOROGR', 'MED_NUCOMU', 'MED_QUIMIO', 'MED_DT_QUI', 'DOENCA_TRA', 'EVOLUCAO', 'MED_DT_EVO', 'DT_ENCERRA', 'LAB_HEMA', 'LAB_NEUTRO', 'LAB_GLICO', 'LAB_LEUCO', 'LAB_EOSI', 'LAB_PROT', 'LAB_MONO', 'LAB_LINFO', 'LAB_CLOR', 'NU_LOTE_I']
+
+Total de colunas: 131
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Transtornos mentais relacionados ao trabalho (MENT)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Transtornos mentais relacionados ao trabalho (MENT)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: MENTBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Transtornos mentais relacionados ao trabalho (MENT):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'DIAG_ESP', 'ALCOOL', 'PSICO_FARM', 'DROGAS', 'FUMA', 'TEMPO_FUMA', 'TP_TEMP_FU', 'AFAST_DESG', 'INDIVIDUAL', 'MUDA_TRAB', 'NENHUM', 'COLETIVA', 'AFAST_TRAB', 'CONDUTA', 'TRAB_DOE', 'CAPES', 'DT_OBITO', 'CAT', 'EVOLUCAO', 'CONDUT_DES', 'NU_LOTE_I', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 62
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Notificação de Tracoma (NTRA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Notificação de Tracoma (NTRA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: NTRABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Notificação de Tracoma (NTRA):
+['DT_NOTIFIC', 'NU_ANO', 'ID_AGRAVO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_UNIDADE', 'SEM_NOT', 'ID_REGIONA', 'CS_INQUERI', 'NU_CASOEXA', 'NU_CASOPOS', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE', 'NU_LOTE_V', 'NU_LOTE_H', 'NU_SEMA_EP']
+
+Total de colunas: 22
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Perda auditiva por ruído relacionado ao trabalho (PAIR)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Perda auditiva por ruído relacionado ao trabalho (PAIR)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: PAIRBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Perda auditiva por ruído relacionado ao trabalho (PAIR):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'HIPERTEN', 'TUBE', 'DIABETES', 'ASMA', 'HANSENIASE', 'MENTAL', 'OUT_AGRAVO', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'TPRUIDO', 'SOLVENTE', 'GASES', 'METAL', 'MEDICA', 'RUIDO_OUT', 'ZUMBIDO', 'CEFALEIA', 'TONTURA', 'FALA', 'OUTRO_SIN', 'DIAG_ESP', 'AFASTAMENT', 'NU_AFAST', 'TP_AFAST', 'EVOL_AFAST', 'TRAB_DOE', 'AFAST_RISC', 'INDIVIDUAL', 'MUDA_TRAB', 'NENHUM', 'COLETIVA', 'AFAST_TRAB', 'CONDUTA', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'AGRAVO_DES', 'RUI_OUTDES', 'CONDUTA_DE', 'NU_LOTE_I']
+
+Total de colunas: 70
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Peste (PEST)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Peste (PEST)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: PESTBR23
+[LOG] Baixando e convertendo para DataFrame...
+❌ Erro ao processar a base 'SINAN - Peste (PEST)': No objects to concatenate
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Paralisia Flácida Aguda (PFAN)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Paralisia Flácida Aguda (PFAN)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: PFANBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Paralisia Flácida Aguda (PFAN):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DTPRICONS', 'DT_INVEST', 'ANT_VACINA', 'ANT_DOSES', 'ANT_DT_VAC', 'ANT_30_DIA', 'ANT_PAIS', 'CLI_FEBRE', 'CLI_DIARRE', 'CLI_DORES', 'CLI_SINTOM', 'CLI_VOMITO', 'CLI_OBSTIP', 'CLI_CEFALE', 'CLI_OUTROS', 'OUTROS_DES', 'CLI_DT', 'CLI_AGUDA', 'CLI_FLACID', 'CLI_ASSIME', 'CLI_PROGRE', 'CLI_ASCEND', 'CLI_DESCEN', 'CLI_F_MIE', 'CLI_F_MSE', 'CLI_F_MID', 'CLI_F_MSD', 'LOCA_MIE_N', 'LOCA_MSE_N', 'LOCA_MID_N', 'LOCA_MSD_N', 'CLI_RESPIR', 'CLI_CERVIC', 'CLI_FACE', 'CLI_DT_EXA', 'CLI_A_FMIE', 'CLI_A_FMSE', 'CLI_A_FMID', 'CLI_A_FMSD', 'CLI_A_TMIE', 'CLI_A_TMSE', 'CLI_A_TMID', 'CLI_A_TMSD', 'CLI_A_T_CE', 'CLI_A_T_FA', 'CLI_A_SMIE', 'CLI_A_SMSE', 'CLI_A_SMID', 'CLI_A_SMSD', 'CLI_A_S_FA', 'CLI_AQ_E_N', 'CLI_AQ_D_N', 'CLI_PATE_N', 'CLI_PATD_N', 'CLI_BICE_N', 'CLI_BICD_N', 'CLI_TRIE_N', 'CLI_TRID_N', 'CLI_FLE_E', 'CLI_FLE_D', 'CLI_EXT_E', 'CLI_EXT_D', 'CLI_KERNIG', 'CLI_NUCA', 'CLI_BRUDZ', 'CLI_CONTAT', 'CLI_CON_ES', 'CLI_INJECA', 'CLI_LOCAL', 'ATE_HIPOTE', 'ATE_HOSP', 'ATE_DT_INT', 'ATE_UF', 'ATE_MUNICI', 'LAB_DT_F1', 'LAB_DT_NLE', 'LAB_DT_CEN', 'LAB_DT_R1', 'LAB_Q_F', 'LAB_CON_F', 'LAB_DT_RE1', 'LAB_RES_F1', 'LAB_RES_F2', 'LAB_RES_F3', 'LAB_DT_L_1', 'LAB_L_CEL1', 'LAB_L_LIN1', 'LAB_L_PRO1', 'LAB_L_GLI1', 'LAB_L_CL1', 'LAB_DT_L_2', 'LAB_L_CEL2', 'LAB_L_LIN2', 'LAB_L_PRO2', 'LAB_L_GLI2', 'LAB_L_CL2', 'LAB_DT_E_1', 'LAB_E_D_1', 'LAB_CELEBR', 'LAB_MEDULA', 'LAB_INTEST', 'LAB_DT_C1', 'LAB_RESULT', 'EVOR_DT_RE', 'EVOR_F_MIE', 'EVOR_F_MSE', 'EVOR_F_MID', 'EVOR_F_MSD', 'TONR_MIE_N', 'TONR_MSE_N', 'TONR_MID_N', 'TONR_MSD_N', 'TONR_CER_N', 'TONR_FAC_N', 'REFR_AQE_N', 'REFR_AQD_N', 'REFR_PAE_N', 'REFR_PAD_N', 'REFR_BIE_N', 'REFR_BID_N', 'REFR_TRE_N', 'REFR_TRD_N', 'EVOR_RC_FE', 'EVOR_RC_FD', 'EVOR_RC_EE', 'EVOR_RC_ED', 'EVOR_A_MIE', 'EVOR_A_MSE', 'EVOR_A_MID', 'EVOR_A_MSD', 'EVOR_S_MIE', 'EVOR_S_MSE', 'EVOR_S_MID', 'EVOR_S_MSD', 'EVOR_S_FAC', 'EVOR1_DT_R', 'CLASSI_FIN', 'CRITERIO', 'CON_DESCAR', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'NU_LOTE_I']
+
+Total de colunas: 177
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Pneumoconioses realacionadas ao trabalho (PNEU)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Pneumoconioses realacionadas ao trabalho (PNEU)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: PNEUBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Pneumoconioses realacionadas ao trabalho (PNEU):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'SIT_TRAB', 'NUTEMPO', 'TPTEMPO', 'CNAE', 'UF_EMP', 'MUN_EMP', 'TERCEIRIZA', 'FLUXO_AERE', 'TUBE', 'CANCER', 'ARTRITE', 'TIREOIDITE', 'OUTRO_DOE', 'NUTEMPORIS', 'TPTEMPORIS', 'REGIME', 'POEIRAS', 'SILICA', 'ASBESTO', 'CARVAO', 'POE_MISTA', 'METAL', 'POE_ABRASI', 'BERILIO', 'POE_ORGANI', 'FUMA', 'TEMPO_FUMA', 'TP_TEMP_FU', 'RAIOX', 'BIOPSIA', 'TOMOGRAFIA', 'OUT_EXAME', 'DIAG_ESP', 'TRAB_DOE', 'STAVALIA', 'STRESULTA', 'AFAST_RISC', 'INDIVIDUAL', 'MUDA_TRAB', 'NENHUM', 'COLETIVA', 'AFAST_TRAB', 'CONDUTA', 'EVOLUCAO', 'DT_OBITO', 'CAT', 'OUT_DOE_DE', 'VINC_ESP', 'CONDUT_DES', 'NU_LOTE_I', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 81
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Raiva (RAIV)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Raiva (RAIV)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: RAIVBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Raiva (RAIV):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'DT_INVEST', 'ID_OCUPA_N', 'ARRANHAO', 'LAMBEDURA', 'MORDEDURA', 'CONTATO', 'MUCOSA', 'CABECA', 'MAOS_N', 'PES', 'TRONCO', 'SUPERIORES', 'INFERIORES', 'FERIMENT_N', 'PROFUNDO', 'SUPERFICIA', 'DILACERANT', 'DT_EXPO', 'ANTEC_PRE', 'ANTEC_POS', 'NUM_DOSES', 'DT_TR_RAB', 'ESPECIE_N', 'ESP_OUT', 'VACINAD', 'HOSPITALIZ', 'DT_INTERNA', 'UF', 'MUNICIPIO', 'AEROFOBIA', 'HIDROFOBI', 'DISFAGIA', 'PARESTESI', 'AGRESSIVI', 'PARALISIA', 'AGITACAO', 'FEBRE', 'OUTRO', 'OUTRO_DES', 'ANTI_RAB', 'DT_R_TRA', 'DOSES_A', 'DT_VAC1', 'DT_VAC_ULT', 'TRA_SORO', 'DT_APLI_SO', 'QUANTID', 'INFILTRA', 'IMUNO_DIRE', 'IMUNO_INDI', 'HISTOLOG_N', 'PROVA_BIOL', 'VARIA_VIR', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE']
+
+Total de colunas: 94
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Surto Doenças Transmitidas por Alimentos (SDTA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Surto Doenças Transmitidas por Alimentos (SDTA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: SDTABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Surto Doenças Transmitidas por Alimentos (SDTA):
+['ID_AGRAVO', 'DT_NOTIFIC', 'ID_MUNICIP', 'TP_NOT', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'QT_TOTAL_C', 'CS_LOCAL', 'SG_UF', 'ID_MUNI_RE', 'ID_RG_RESI', 'ID_PAIS', 'DT_DIGITA', 'DTTRANSUS', 'DTTRANSDM', 'DTTRANSRM', 'DTTRANSSM', 'DTTRANSRS', 'DTTRANSSE', 'DT_INVEST', 'CS_TRANS', 'TP_INDIRET', 'TP_LOCAL', 'NU_ENTR', 'NU_ENT_DOE', 'NU_TOT', 'NU_TOT_HOS', 'NU_OBITO', 'NU_1_M_NU', 'NU_1_4_NU', 'NU_5_9_NU', 'NU_10_19_M', 'NU_20_49_N', 'NU_50_M_NU', 'NU_IGRA_NU', 'NU_F_TOT_N', 'NU_1_F_NU', 'NU1_4_F_NU', 'NU5_9_F_NU', 'NU10_19_N', 'NU_20_49_F', 'NU_50_F_NU', 'NU_IG_F_NU', 'NU_TO_F_NU', 'NU_1_IGN', 'NU_1_4_IGN', 'NU_5_9_IGN', 'NU_10_19IG', 'NU_20_49IG', 'NU_50_IGN', 'NU_IG_IGN', 'NU_TOT_IGN', 'NU_1_TOT_N', 'NU_1_4_TOT', 'NU_5_9_TOT', 'NU_10_19', 'NU_20_49', 'NU_50_TOT', 'NU_IGN_NU', 'NU_F_TOT', 'NU_NAUSE_P', 'NU_VOMTO_N', 'NU_DIARR_N', 'NU_CEFAL_N', 'NU_ABDOM_N', 'NU_NEURO_N', 'NU_OUTRO_N', 'NU_FEBRE_N', 'NU_INCUB_M', 'ST_INCUB_M', 'MAX_INC', 'MAX_ST_INC', 'NU_INC_ME', 'ST_INC_ME', 'TP_PRO_PRE', 'ST_IMPRO_', 'ST_INAD', 'ST_MANIP', 'ST_F_OUTRO', 'DS_F_OUTRO', 'ST_A_CLINI', 'NU_A_CLINI', 'NU_CLI_NUM', 'NU_NUM_2', 'NU_RESU_3', 'NU_NUM_3', 'ST_ALIMEN', 'NU_A_ALIM', 'NU_A_NUM_1', 'NU_A_NUM_2', 'NU_A_NUM_3', 'AGENTE_ET1', 'AGENTE_ET2', 'AGENTE_ET3', 'ALIMENTO_C', 'CRITERIO', 'DT_ENCERRA']
+
+Total de colunas: 102
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Sífilis Adquirida (SIFA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Sífilis Adquirida (SIFA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: SIFABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Sífilis Adquirida (SIFA):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_DIAG', 'SEM_DIAG', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'CRITERIO', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA']
+
+Total de colunas: 27
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Sífilis Congênita (SIFC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Sífilis Congênita (SIFC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: SIFCBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Sífilis Congênita (SIFC):
+['TP_NOT', 'SEM_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_DIAG', 'SEM_DIAG', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ANT_IDADE', 'ANT_RACA', 'ID_OCUPA_N', 'ESCOLMAE', 'ANT_PRE_NA', 'UF_PRE_NAT', 'MUN_PRE_NA', 'ANTSIFIL_N', 'LAB_PARTO', 'LAB_TITU_2', 'LAB_DT3', 'LAB_CONF', 'TRA_ESQUEM', 'TRA_DT', 'ANT_TRATAD', 'ANT_UF_CRI', 'ANT_MUNI_C', 'LABC_SANGU', 'LABC_TIT_1', 'LABC_DT_1', 'LABC_IGG', 'LABC_DT', 'LABC_LIQUO', 'LABC_TIT_2', 'LABC_DT_2', 'LABC_TITUL', 'LABC_EVIDE', 'LABC_LIQ_1', 'TRA_DIAG_T', 'TRA_ESQU_1', 'DS_ESQUEMA', 'EVOLUCAO', 'DT_OBITO', 'EVO_DIAG_N', 'TRA_DIAG_C', 'CLI_ICTERI', 'CLI_RINITE', 'CLI_ANEMIA', 'CLI_ESPLEN', 'HEPATO', 'CLI_OSTEO', 'LESOES', 'CLI_OUTRO', 'SIN_OUTR_E', 'CLI_PSEUDO']
+
+Total de colunas: 64
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Sífilis em Gestante (SIFG)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Sífilis em Gestante (SIFG)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: SIFGBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Sífilis em Gestante (SIFG):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_DIAG', 'SEM_DIAG', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'ID_OCUPA_N', 'PRE_UFREL', 'PRE_MUNIRE', 'TPEVIDENCI', 'TPTESTE1', 'DSTITULO1', 'DTTESTE1', 'TPCONFIRMA', 'TPESQUEMA', 'DSMOTIVO', 'TPMOTPARC', 'TPESQPAR', 'TRATPARC', 'CLASSI_FIN']
+
+Total de colunas: 32
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Síndrome da Rubéola Congênia (SRC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Síndrome da Rubéola Congênia (SRC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: SRCBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Síndrome da Rubéola Congênia (SRC):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_DIAG', 'SEM_DIAG', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'RECEM_NASC', 'PESO', 'CATARATA', 'RETINOPA', 'GLAUCOMA', 'AUDITIVA', 'CARDIOPATI', 'DSCARDIOP', 'RETAR_PM', 'MICROCEFA', 'MENINGO', 'HEPA_ESP', 'ICTERICIA', 'PURPURA', 'OSSEA', 'DT_COL1', 'DT_COL2', 'DT_COL3', 'S1_IGM', 'S1_IGG', 'S2_IGM', 'S2_IGG', 'S3_IGM', 'S3_IGG', 'CS_SANGUE', 'CS_SECRECA', 'CS_URINA', 'CS_LIQUOR', 'CS_RESULTA', 'DS_RESU_OU', 'BLOQUEIO', 'ISOLAMENTO', 'IDADEMAE', 'VACINACAO', 'VACINARUBE', 'VACINADUPL', 'DT_VACINA', 'SINAIS', 'PERIODO', 'DIAG_MAE', 'CLASSI_FIN', 'CRITERIO', 'ID_DG_DES', 'DG_OUT_N', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 76
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Tétano Acidental (TETA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Tétano Acidental (TETA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TETABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Tétano Acidental (TETA):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'TP_CAUSA', 'TP_CAUSOUT', 'TP_LOCALLE', 'NU_DOSE', 'DT_ULT_DOS', 'TP_PROFILA', 'CS_TRISMO', 'CS_RISO', 'CS_OPISTOT', 'CS_NUCA', 'CS_ABDOMIN', 'CS_MEMBROS', 'CS_CRISES', 'CS_SIN_OUT', 'NM_SIN_OUT', 'TP_ORIGEM', 'CS_HOSPITA', 'DT_INTERNA', 'SG_UF_INTE', 'NM_MUNIC_H', 'TP_IDENTFI', 'TP_VACINA', 'TP_ANALISE', 'CLASSI_FIN', 'CS_LOCAL', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'EVOLUCAO', 'DT_ENCERRA', 'DT_OBITO', 'NU_LOTE_I', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 65
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Tétano Neonatal (TETN)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Tétano Neonatal (TETN)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TETNBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Tétano Neonatal (TETN):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'DT_INVEST', 'ID_OCUPA_N', 'NUM_CON_N', 'CS_VACTETA', 'DT_1_DOSE', 'DT_2_DOSE', 'DT_3_DOSE', 'DT_REFORCO', 'IDADE_MAE', 'NU_GESTA', 'ESCOLMAE_N', 'CS_NASCIDO', 'NO_OUPARTO', 'CS_ATEND_N', 'NO_ATENOUT', 'CS_SUGOU', 'CS_MAMAR', 'CS_TRISMO', 'CS_NUCA', 'CS_CHORO', 'CS_RISO', 'CS_ABDOMEN', 'CS_INF_COT', 'CS_OPISTOT', 'CS_MEMBROS', 'CS_CRISE', 'CS_OUTROS', 'NM_OUT_SIN', 'DT_TRISMO', 'CS_ORIGEM', 'CS_HOSPITA', 'CS_COBERTU', 'NO_COBOUTR', 'CS_VACINAC', 'CS_CADASTR', 'CS_DIVULGA', 'CS_BUSCAAT', 'CS_ORIENTA', 'CS_ANALISE', 'CS_OUTRAS', 'NO_OUTRAS', 'CLASSI_FIN', 'DS_INF_LOC', 'DS_INF_OUT', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'COUNIDINF', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H', 'NU_LOTE_I']
+
+Total de colunas: 83
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Toxoplasmose Congênita (TOXC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Toxoplasmose Congênita (TOXC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TOXCBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Toxoplasmose Congênita (TOXC):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'IN_VINCULA', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'TP_SISTEMA', 'TPUNINOT']
+
+Total de colunas: 38
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Toxoplasmose Gestacional (TOXG)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Toxoplasmose Gestacional (TOXG)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TOXGBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Toxoplasmose Gestacional (TOXG):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'IN_VINCULA', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'TP_SISTEMA', 'TPUNINOT']
+
+Total de colunas: 38
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Inquérito de Tracoma (TRAC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Inquérito de Tracoma (TRAC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TRACBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Inquérito de Tracoma (TRAC):
+['DT_NOTIFIC', 'ID_AGRAVO', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'CS_INQUERI', 'NU_CASO', 'SG_UF', 'ID_MUNI_RE', 'CS_SEXO', 'NU_IDADE_N', 'FORMA_TF', 'FORMA_TI', 'FORMA_TS', 'FORMA_TT', 'FORMA_CO', 'ENCAMINHA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'NU_LOTE_V', 'NU_LOTE_H']
+
+Total de colunas: 29
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Tuberculose (TUBE)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Tuberculose (TUBE)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: TUBEBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Tuberculose (TUBE):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'DT_DIAG', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'IN_VINCULA', 'DT_DIGITA', 'DT_TRANSUS', 'DT_TRANSDM', 'DT_TRANSSM', 'DT_TRANSRM', 'DT_TRANSRS', 'DT_TRANSSE', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'ID_OCUPA_N', 'TRATAMENTO', 'INSTITUCIO', 'RAIOX_TORA', 'TESTE_TUBE', 'FORMA', 'EXTRAPU1_N', 'EXTRAPU2_N', 'AGRAVAIDS', 'AGRAVALCOO', 'AGRAVDIABE', 'AGRAVDOENC', 'AGRAVOUTRA', 'BACILOSC_E', 'BACILOS_E2', 'BACILOSC_O', 'CULTURA_ES', 'CULTURA_OU', 'HIV', 'HISTOPATOL', 'DT_INIC_TR', 'RIFAMPICIN', 'ISONIAZIDA', 'ETAMBUTOL', 'ESTREPTOMI', 'PIRAZINAMI', 'ETIONAMIDA', 'OUTRAS', 'TRAT_SUPER', 'NU_CONTATO', 'DOENCA_TRA', 'SG_UF_AT', 'ID_MUNIC_A', 'DT_NOTI_AT', 'SG_UF_2', 'ID_MUNIC_2', 'BACILOSC_1', 'BACILOSC_2', 'BACILOSC_3', 'BACILOSC_4', 'BACILOSC_5', 'BACILOSC_6', 'TRATSUP_AT', 'DT_MUDANCA', 'NU_COMU_EX', 'SITUA_9_M', 'SITUA_12_M', 'SITUA_ENCE', 'DT_ENCERRA', 'TPUNINOT', 'POP_LIBER', 'POP_RUA', 'POP_SAUDE', 'POP_IMIG', 'BENEF_GOV', 'AGRAVDROGA', 'AGRAVTABAC', 'TEST_MOLEC', 'TEST_SENSI', 'ANT_RETRO', 'BAC_APOS_6', 'TRANSF', 'UF_TRANSF', 'MUN_TRANSF']
+
+Total de colunas: 94
+
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Varicela (VARC)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Varicela (VARC)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: VARCBR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Varicela (VARC):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'IN_VINCULA', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'CS_FLXRET', 'FLXRECEBI', 'MIGRADO_W', 'TP_SISTEMA', 'TPUNINOT']
+
+Total de colunas: 41
+
+
+---
+[AVISO] Pulando o agravo 'VIOL' (Violência doméstica, sexual e/ou outras violências) conforme solicitado.
+---
+----------------------------------------------------------------------
+🔎 Analisando: SINAN - Zika Vírus (ZIKA)
+----------------------------------------------------------------------
+[LOG] Definições de 'SINAN - Zika Vírus (ZIKA)' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: ZIKABR23
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas para SINAN - Zika Vírus (ZIKA):
+['TP_NOT', 'ID_AGRAVO', 'DT_NOTIFIC', 'SEM_NOT', 'NU_ANO', 'SG_UF_NOT', 'ID_MUNICIP', 'ID_REGIONA', 'ID_UNIDADE', 'DT_SIN_PRI', 'SEM_PRI', 'ANO_NASC', 'NU_IDADE_N', 'CS_SEXO', 'CS_GESTANT', 'CS_RACA', 'CS_ESCOL_N', 'SG_UF', 'ID_MN_RESI', 'ID_RG_RESI', 'ID_PAIS', 'NDUPLIC_N', 'IN_VINCULA', 'DT_INVEST', 'ID_OCUPA_N', 'CLASSI_FIN', 'CRITERIO', 'TPAUTOCTO', 'COUFINF', 'COPAISINF', 'COMUNINF', 'DOENCA_TRA', 'EVOLUCAO', 'DT_OBITO', 'DT_ENCERRA', 'DT_DIGITA', 'TP_SISTEMA', 'TPUNINOT']
+
+Total de colunas: 38
+
+----------------------------------------------------------------------
+🔎 Analisando: SINASC - Nascidos Vivos
+----------------------------------------------------------------------
+[LOG] Definições de 'SINASC - Nascidos Vivos' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+⚠️ Nenhum arquivo encontrado para 'SINASC - Nascidos Vivos'. Pulando.
+----------------------------------------------------------------------
+🔎 Analisando: SIM - Mortalidade
+----------------------------------------------------------------------
+[LOG] Definições de 'SIM - Mortalidade' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+❌ Erro ao processar a base 'SIM - Mortalidade': 'DO'
+----------------------------------------------------------------------
+🔎 Analisando: SIA - Produção Ambulatorial
+----------------------------------------------------------------------
+[LOG] Definições de 'SIA - Produção Ambulatorial' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: PATO2301
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas do SIA (Produção Ambulatorial):
+['PA_CODUNI', 'PA_GESTAO', 'PA_CONDIC', 'PA_UFMUN', 'PA_REGCT', 'PA_INCOUT', 'PA_INCURG', 'PA_TPUPS', 'PA_TIPPRE', 'PA_MN_IND', 'PA_CNPJCPF', 'PA_CNPJMNT', 'PA_CNPJ_CC', 'PA_MVM', 'PA_CMP', 'PA_PROC_ID', 'PA_TPFIN', 'PA_SUBFIN', 'PA_NIVCPL', 'PA_DOCORIG', 'PA_AUTORIZ', 'PA_CNSMED', 'PA_CBOCOD', 'PA_MOTSAI', 'PA_OBITO', 'PA_ENCERR', 'PA_PERMAN', 'PA_ALTA', 'PA_TRANSF', 'PA_CIDPRI', 'PA_CIDSEC', 'PA_CIDCAS', 'PA_CATEND', 'PA_IDADE', 'IDADEMIN', 'IDADEMAX', 'PA_FLIDADE', 'PA_SEXO', 'PA_RACACOR', 'PA_MUNPCN', 'PA_QTDPRO', 'PA_QTDAPR', 'PA_VALPRO', 'PA_VALAPR', 'PA_UFDIF', 'PA_MNDIF', 'PA_DIF_VAL', 'NU_VPA_TOT', 'NU_PA_TOT', 'PA_INDICA', 'PA_CODOCO', 'PA_FLQT', 'PA_FLER', 'PA_ETNIA', 'PA_VL_CF', 'PA_VL_CL', 'PA_VL_INC', 'PA_SRV_C', 'PA_INE', 'PA_NAT_JUR']
+
+Total de colunas: 60
+
+----------------------------------------------------------------------
+🔎 Analisando: SIH - Internações Hospitalares
+----------------------------------------------------------------------
+[LOG] Definições de 'SIH - Internações Hospitalares' carregadas.
+[LOG] Buscando arquivos para o ano 2023...
+[LOG] Arquivo de amostra encontrado: RDTO2301
+[LOG] Baixando e convertendo para DataFrame...
+[LOG] Download e conversão concluídos.
+
+✅ Colunas do SIH (Internações):
+['UF_ZI', 'ANO_CMPT', 'MES_CMPT', 'ESPEC', 'CGC_HOSP', 'N_AIH', 'IDENT', 'CEP', 'MUNIC_RES', 'NASC', 'SEXO', 'UTI_MES_IN', 'UTI_MES_AN', 'UTI_MES_AL', 'UTI_MES_TO', 'MARCA_UTI', 'UTI_INT_IN', 'UTI_INT_AN', 'UTI_INT_AL', 'UTI_INT_TO', 'DIAR_ACOM', 'QT_DIARIAS', 'PROC_SOLIC', 'PROC_REA', 'VAL_SH', 'VAL_SP', 'VAL_SADT', 'VAL_RN', 'VAL_ACOMP', 'VAL_ORTP', 'VAL_SANGUE', 'VAL_SADTSR', 'VAL_TRANSP', 'VAL_OBSANG', 'VAL_PED1AC', 'VAL_TOT', 'VAL_UTI', 'US_TOT', 'DT_INTER', 'DT_SAIDA', 'DIAG_PRINC', 'DIAG_SECUN', 'COBRANCA', 'NATUREZA', 'NAT_JUR', 'GESTAO', 'RUBRICA', 'IND_VDRL', 'MUNIC_MOV', 'COD_IDADE', 'IDADE', 'DIAS_PERM', 'MORTE', 'NACIONAL', 'NUM_PROC', 'CAR_INT', 'TOT_PT_SP', 'CPF_AUT', 'HOMONIMO', 'NUM_FILHOS', 'INSTRU', 'CID_NOTIF', 'CONTRACEP1', 'CONTRACEP2', 'GESTRISCO', 'INSC_PN', 'SEQ_AIH5', 'CBOR', 'CNAER', 'VINCPREV', 'GESTOR_COD', 'GESTOR_TP', 'GESTOR_CPF', 'GESTOR_DT', 'CNES', 'CNPJ_MANT', 'INFEHOSP', 'CID_ASSO', 'CID_MORTE', 'COMPLEX', 'FINANC', 'FAEC_TP', 'REGCT', 'RACA_COR', 'ETNIA', 'SEQUENCIA', 'REMESSA', 'AUD_JUST', 'SIS_JUST', 'VAL_SH_FED', 'VAL_SP_FED', 'VAL_SH_GES', 'VAL_SP_GES', 'VAL_UCI', 'MARCA_UCI', 'DIAGSEC1', 'DIAGSEC2', 'DIAGSEC3', 'DIAGSEC4', 'DIAGSEC5', 'DIAGSEC6', 'DIAGSEC7', 'DIAGSEC8', 'DIAGSEC9', 'TPDISEC1', 'TPDISEC2', 'TPDISEC3', 'TPDISEC4', 'TPDISEC5', 'TPDISEC6', 'TPDISEC7', 'TPDISEC8', 'TPDISEC9']
+
+Total de colunas: 113
+

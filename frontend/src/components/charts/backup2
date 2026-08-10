@@ -1,0 +1,253 @@
+// src/components/charts/MapaCoropleticoEstado.jsx
+
+import React, { useMemo, useState, useEffect } from 'react';
+import Plot from 'react-plotly.js';
+import axios from 'axios';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+import { INDICADORES_MAP } from '../../config/indicadores';
+
+const GEOJSON_ID_KEY = 'id';
+
+const GEOJSON_PATHS = {
+    'AC': 'geojs-12-mun.json', 'AL': 'geojs-27-mun.json', 'AM': 'geojs-13-mun.json', 'AP': 'geojs-16-mun.json', 'BA': 'geojs-29-mun.json', 'CE': 'geojs-23-mun.json', 'DF': 'geojs-53-mun.json', 'ES': 'geojs-32-mun.json', 'GO': 'geojs-52-mun.json', 'MA': 'geojs-21-mun.json', 'MG': 'geojs-31-mun.json', 'MS': 'geojs-50-mun.json', 'MT': 'geojs-51-mun.json', 'PA': 'geojs-15-mun.json', 'PB': 'geojs-25-mun.json', 'PE': 'geojs-26-mun.json', 'PI': 'geojs-22-mun.json', 'PR': 'geojs-41-mun.json', 'RJ': 'geojs-33-mun.json', 'RN': 'geojs-24-mun.json', 'RO': 'geojs-11-mun.json', 'RR': 'geojs-14-mun.json', 'RS': 'geojs-43-mun.json', 'SC': 'geojs-42-mun.json', 'SP': 'geojs-35-mun.json', 'SE': 'geojs-28-mun.json', 'TO': 'geojs-17-mun.json', 'BR': 'geojs-100-mun.json',
+};
+
+
+const DEFAULT_PROFILE_COLORS = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+'#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+];
+
+
+const MapaCoropleticoEstado = ({ uf, data, selectedIndicator, ufConfig, selectedYear }) => {
+    const [geojson, setGeojson] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (!uf) return;
+
+        const fetchGeojson = async () => {
+            setLoading(true);
+            setError(null);
+
+            const fileName = GEOJSON_PATHS[uf.toUpperCase()];
+            if (!fileName) {
+                setLoading(false);
+                setError(`Nome de arquivo GeoJSON não encontrado para a UF: ${uf}.`);
+                return;
+            }
+
+            const geojsonUrl = `/geojson_uf/${fileName}`;
+
+            try {
+                const response = await fetch(geojsonUrl);
+                if (!response.ok) {
+                    throw new Error(`Falha ao carregar GeoJSON de '${geojsonUrl}': ${response.statusText}`);
+                }
+                const jsonData = await response.json();
+                setGeojson(jsonData);
+                console.log(`DEBUG MAPA COROPLETICO: GeoJSON para ${uf} carregado. Número de features: ${jsonData.features.length}`);
+                console.log('DEBUG MAPA COROPLETICO: Exemplo de GeoJSON ID (feature 0):', jsonData.features[0].properties.id);
+                console.log('DEBUG MAPA COROPLETICO: Exemplo de GeoJSON ID (feature 10):', jsonData.features[10].properties.id);
+
+            } catch (err) {
+                console.error("Erro ao buscar GeoJSON estático:", err);
+                setError(`Não foi possível carregar o mapa para ${uf.toUpperCase()}. Detalhes: ${err.message}. Verifique se o arquivo está em public/geojson_uf/.`);
+                setGeojson(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchGeojson();
+    }, [uf]);
+
+    // Prepara os dados para o gráfico coroplético do Plotly
+    const plotData = useMemo(() => {
+        console.log("DEBUG MAPA COROPLETICO: Recalculando plotData...");
+        console.log("DEBUG MAPA COROPLETICO: Dados de entrada (data) count:", data?.length, "selectedIndicator:", selectedIndicator);
+        console.log("DEBUG MAPA COROPLETICO: geojson carregado:", geojson ? "Sim" : "Não");
+
+        if (!geojson || !data || data.length === 0 || !selectedIndicator) {
+            console.log("DEBUG MAPA COROPLETICO: Condições iniciais para plotData não atendidas. Retornando null.");
+            return null; // Retorna nulo se os dados essenciais não estiverem disponíveis
+        }
+
+        const dataForPlotting = data;
+
+        const municipalityDataMap = new Map();
+        dataForPlotting.forEach(item => {
+            const mapKey = String(item.cod_mun_ibge_7);
+
+            const value = item[selectedIndicator];
+            const color = item.cor || null;
+
+            if (mapKey && (value !== null && value !== undefined)) {
+                municipalityDataMap.set(mapKey, { value: value, color: color });
+            }
+        });
+        console.log("DEBUG MAPA COROPLETICO: Tamanho do municipalityDataMap:", municipalityDataMap.size);
+
+        const locations = [];
+        const zValues = [];
+        const textValues = [];
+        const markerColors = []; // Para debug, não é mais a fonte principal de cor
+
+        // ⭐ FIX CRÍTICO AQUI: Mover a declaração destas variáveis para o início do useMemo ⭐
+        const allPossibleZValues = [...new Set(dataForPlotting.map(item => item[selectedIndicator]))]
+        .filter(Boolean)
+        .sort((a,b) => String(a).localeCompare(String(b)));
+
+        const discreteColorsMap = {};
+        allPossibleZValues.forEach((val, index) => {
+            const sampleItem = dataForPlotting.find(item => item[selectedIndicator] === val && item.cor);
+            if (sampleItem && sampleItem.cor) {
+                discreteColorsMap[val] = sampleItem.cor;
+            } else {
+                discreteColorsMap[val] = DEFAULT_PROFILE_COLORS[index % DEFAULT_PROFILE_COLORS.length];
+            }
+        });
+        console.log("DEBUG MAPA COROPLETICO: Mapeamento de Cores Discretas:", discreteColorsMap);
+
+
+        // NOVO: Mapear o nome do perfil (string) para um número inteiro e uma cor
+        // Este é o mapeamento que faltava para profileToNumericMap
+        const profileToNumericMap = {}; // Variável movida e definida
+        const categoricalColorscale = []; // Variável movida e definida
+
+        allPossibleZValues.forEach((val, index) => {
+            profileToNumericMap[val] = index; // 'Perfil A' -> 0, 'Perfil B' -> 1
+            const sampleItem = dataForPlotting.find(item => item[selectedIndicator] === val && item.cor);
+            const colorForProfile = (sampleItem && sampleItem.cor) ? sampleItem.cor : DEFAULT_PROFILE_COLORS[index % DEFAULT_PROFILE_COLORS.length];
+
+            const normalizedIndex = index / (allPossibleZValues.length - 1 || 1);
+            categoricalColorscale.push([normalizedIndex, colorForProfile]);
+        });
+        categoricalColorscale.sort((a,b) => a[0] - b[0]); // Garante que a escala esteja ordenada
+
+
+        geojson.features.forEach(feature => {
+            const geoId = String(feature.properties[GEOJSON_ID_KEY]);
+            const clusterInfo = municipalityDataMap.get(geoId);
+            const municipioName = feature.properties.nome;
+            const ufCodeFromGeoId = String(feature.properties[GEOJSON_ID_KEY]).substring(0,2);
+            const ufNameInGeojson = UF_CONFIGS[Object.keys(UF_CONFIGS).find(key => UF_CONFIGS[key].ibgePrefix === ufCodeFromGeoId)]?.nome || feature.properties.UF || ufCodeFromGeoId;
+
+            locations.push(geoId);
+
+            if (clusterInfo && clusterInfo.value !== null && clusterInfo.value !== undefined) {
+                zValues.push(profileToNumericMap[clusterInfo.value]); // Passa o valor numérico mapeado para 'z'
+                markerColors.push(clusterInfo.color || discreteColorsMap[clusterInfo.value]); // MarkerColors para debug
+                textValues.push(`${municipioName} (${ufNameInGeojson})<br>${selectedIndicator}: ${clusterInfo.value}`);
+            } else {
+                zValues.push(null);
+                markerColors.push('#cccccc');
+                textValues.push(`${municipioName} (${ufNameInGeojson})<br>Sem dados.`);
+            }
+        });
+
+        console.log(`DEBUG MAPA COROPLETICO: Total de ZValues não nulos (municípios coloridos): ${zValues.filter(v => v !== null).length}`);
+        console.log("DEBUG MAPA COROPLETICO: Final Locations count:", locations.length);
+        console.log("DEBUG MAPA COROPLETICO: Final ZValues count:", zValues.length);
+        console.log("DEBUG MAPA COROPLETICO: Amostra de Locations (primeiros 10):", locations.slice(0, 10));
+        console.log("DEBUG MAPA COROPLETICO: Amostra de ZValues (primeiros 10, numéricos):", zValues.slice(0, 10));
+        console.log("DEBUG MAPA COROPLETICO: Amostra de MarkerColors (primeiros 10 não-cinzas):", markerColors.filter(color => color !== '#cccccc').slice(0,10));
+
+
+        if (locations.length === 0) {
+            console.log("DEBUG MAPA COROPLETICO: plotData: No locations to plot.");
+            return null;
+        }
+
+        return [{
+            type: 'choropleth',
+            geojson: geojson,
+            locations: locations,
+            z: zValues, // Passa os valores numéricos categóricos
+            text: textValues,
+            hoverinfo: 'text',
+            featureidkey: `properties.${GEOJSON_ID_KEY}`,
+            marker: {
+                line: { color: 'white', width: 0.5 },
+                // color: markerColors, // Removido, pois a cor será determinada por z e colorscale
+            },
+            showscale: false, // Não mostrar barra de escala contínua
+            colorscale: categoricalColorscale,
+            zmin: 0,
+            zmax: allPossibleZValues.length > 0 ? (allPossibleZValues.length - 1) : 0,
+        }];
+    }, [data, selectedIndicator, geojson, selectedYear, uf]);
+
+
+    // Constrói o título dinâmico do mapa
+    const mapTitle = useMemo(() => {
+        const indicatorLabel = INDICADORES_MAP[selectedIndicator] || selectedIndicator;
+        const ufName = ufConfig?.nome || uf?.toUpperCase() || 'Estado';
+        return `Distribuição de ${indicatorLabel} em ${ufName} (${selectedYear})`;
+    }, [selectedIndicator, ufConfig, uf, selectedYear]);
+
+    // Define a configuração de layout geográfico do mapa (zoom, centro)
+    const mapLayoutGeo = useMemo(() => {
+        const baseGeoConfig = {
+            scope: 'south america',
+            showland: true, landcolor: 'rgb(243,243,243)',
+                                 countrycolor: 'rgb(204,204,204)', projection: { type: 'mercator' },
+                                 visible: false,
+                                 subunitcolor: 'rgb(204,204,204)',
+                                 coastlinecolor: 'rgb(204,204,204)',
+        };
+
+        if (uf === 'BR') {
+            return {
+                ...baseGeoConfig,
+                fitbounds: false,
+                center: { lat: -14, lon: -50 },
+                lataxis: { range: [-35, 5] },
+                lonaxis: { range: [-75, -30] },
+                zoom: 2.5,
+            };
+        } else if (ufConfig && ufConfig.zoom && ufConfig.center) {
+            return {
+                ...baseGeoConfig,
+                fitbounds: 'locations',
+                center: ufConfig.center,
+                zoom: ufConfig.zoom,
+            };
+        }
+        return baseGeoConfig;
+    }, [ufConfig, uf]);
+
+
+    // Mensagens de carregamento e erro
+    if (error) return <p className="text-red-500 text-center mt-4">Erro ao carregar mapa: {error}</p>;
+    if (loading) return <p className="text-gray-600 text-center mt-4">Carregando mapa GeoJSON para {uf}...</p>;
+    if (!geojson) return <p className="text-gray-600 text-center mt-4">Não foi possível carregar o mapa GeoJSON para {uf}.</p>;
+    if (!data || data.length === 0) return <p className="text-gray-600 text-center mt-4">Sem dados para exibir no mapa.</p>;
+    if (!plotData) return <p className="text-gray-600 text-center mt-4">Mapa carregado, mas sem dados correspondentes para exibir com o indicador selecionado. Verifique os filtros e IDs.</p>;
+
+    return (
+        <div className="bg-white p-4 rounded-lg shadow-md h-[600px] w-full">
+        <Plot
+        data={plotData}
+        layout={{
+            title: {
+                text: mapTitle,
+                font: { size: 20, color: '#333' },
+                xref: 'paper',
+                x: 0.05,
+                xanchor: 'left',
+                yanchor: 'top',
+            },
+            geo: mapLayoutGeo,
+            margin: { t: 50, b: 20, l: 20, r: 20 },
+            autosize: true,
+            colorway: DEFAULT_PROFILE_COLORS, // Adicionado para tentar forçar o colorway
+        }}
+        config={{ responsive: true, displayModeBar: false }}
+        className="w-full h-full"
+        />
+        </div>
+    );
+};
+
+export default MapaCoropleticoEstado;

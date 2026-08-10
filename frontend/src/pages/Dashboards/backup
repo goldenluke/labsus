@@ -1,0 +1,549 @@
+// src/pages/Dashboards/KMeansPerfisSaudePage.jsx
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Plot from 'react-plotly.js';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+
+import useCeleryTaskStatus from '../../hooks/useCeleryTaskStatus';
+import { INDICADORES_MAP } from '../../config/indicadores';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+
+import useAnalysisData from '../../hooks/useAnalysisData';
+
+
+const GEOJSON_ID_KEY = 'id';
+
+// Cores padrão para perfis, se não houver um arquivo de arquétipos ou cores no arquivo
+const DEFAULT_PROFILE_COLORS = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+'#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+];
+
+
+const KMeansPerfisSaudePage = () => {
+    const { uf: ufParam } = useParams();
+
+    // State variables for K-Means result file dropdown
+    const [selectedInputFileId, setSelectedInputFileId] = useState('');
+    const [availableFiles, setAvailableFiles] = useState([]);
+    const [loadingFiles, setLoadingFiles] = useState(true);
+    const [filesError, setFilesError] = useState(null);
+
+    // State variables for K-means task status from hook (for display purposes if needed)
+    const [kmeansTaskId, setKmeansTaskId] = useState(null);
+    const { status, result, error: taskError, isPending, isSuccess, isFailure, progress, message } = useCeleryTaskStatus(kmeansTaskId, '/api/pipelines/kmeans/tasks/');
+
+    // Navigation hook
+    const navigate = useNavigate();
+
+    // K-means specific parameters (not directly used for visualization inputs, but inferred from data)
+    const [nClusters, setNClusters] = useState(3); // Inferido/display
+    const [featuresForClustering, setFeaturesForClustering] = useState([]); // Inferido/display
+    const [availableFeaturesForClustering, setAvailableFeaturesForClustering] = useState([]); // Inferido/display
+
+    // States for archetype file dropdown (local management, not directly used for map)
+    const [availableArchetypeFiles, setAvailableArchetypeFiles] = useState([]);
+    const [selectedArchetypeFileId, setSelectedArchetypeFileId] = useState('');
+    const [loadingArchetypeFiles, setLoadingArchetypeFiles] = useState(true);
+    const [archetypeFilesError, setArchetypeFilesError] = useState(null);
+
+    const [outputFilename, setOutputFilename] = useState(''); // State for output filename (if applicable)
+
+    const [outputFileUrl, setOutputFileUrl] = useState(null); // State for the generated output file URL
+
+
+    // States for K-Means specific filters (Clusters and Profiles for map interaction)
+    const [selectedClusterId, setSelectedClusterId] = useState('');
+    const [availableClusters, setAvailableClusters] = useState([]);
+    const [selectedProfile, setSelectedProfile] = useState('');
+    const [availableProfiles, setAvailableProfiles] = useState([]);
+
+
+    // useAnalysisData hook call (fetches data for the selected K-Means result file)
+    const {
+        allData,
+        loading: hookLoading,
+        error: hookError,
+
+        selectedUf, setSelectedUf, // UF filter state and setter
+        selectedYear, setSelectedYear, // Year filter state and setter
+
+        availableUfs, // Lista de UFs dos dados
+        availableYears, // Lista de Anos dos dados
+        availableIndicators, // Lista de indicadores (útil para exibir nomes amigáveis)
+
+        geojson, loadingMap, ufMapConfig, // GeoJSON e configurações de mapa do useAnalysisData
+
+        setSelectedFileId: setHookSelectedFileId, // Setter to control which file useAnalysisData fetches
+    } = useAnalysisData('BR', 2022, 'perfil', ufParam || null, selectedInputFileId);
+
+
+
+    // Option data for various dropdowns (unchanged, not related to current error)
+    const ufOptions = useMemo(() => { return Object.keys(UF_CONFIGS).filter(uf => uf !== 'BR').map(ufCode => ({ label: UF_CONFIGS[ufCode].nome, value: ufCode })); }, []);
+    const yearOptions = useMemo(() => { const currentYear = new Date().getFullYear(); const years = Array.from({ length: 5 }, (_, i) => currentYear - i); return years.map(year => ({ label: year.toString(), value: year })); }, []);
+    const indicatorOptions = useMemo(() => { return Object.keys(INDICADORES_MAP).map(key => ({ label: INDICADORES_MAP[key], value: key })); }, []);
+
+
+    // 1. Fetch the list of available K-Means result files for the main dropdown
+    useEffect(() => {
+        const fetchFiles = async () => {
+            try {
+                setLoadingFiles(true);
+                setFilesError(null);
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', {
+                    headers: { 'Authorization': `Token ${token}` },
+                    params: { file_type: 'K_MEANS' } // Filtrar por K_MEANS para esta página visualizadora
+                });
+                console.log("DEBUG: K-Means Result Files received from backend:", response.data);
+
+                const filteredOnlyKMeans = response.data.filter(file => file.file_type === 'K_MEANS');
+                setAvailableFiles(filteredOnlyKMeans);
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileIdFromUrl = urlParams.get('fileId');
+
+                if (fileIdFromUrl) {
+                    const fileExists = filteredOnlyKMeans.some(f => String(f.id) === fileIdFromUrl);
+                    if (fileExists) {
+                        setSelectedInputFileId(fileIdFromUrl);
+                    } else {
+                        setSelectedInputFileId(filteredOnlyKMeans.length > 0 ? filteredOnlyKMeans[0].id.toString() : '');
+                        if (filteredOnlyKMeans.length > 0) {
+                            navigate(`/dashboards/kmeans-perfis-saude?fileId=${filteredOnlyKMeans[0].id}`, { replace: true });
+                        }
+                    }
+                } else if (filteredOnlyKMeans.length > 0) {
+                    setSelectedInputFileId(filteredOnlyKMeans[0].id.toString());
+                    navigate(`/dashboards/kmeans-perfis-saude?fileId=${filteredOnlyKMeans[0].id}`, { replace: true });
+                } else {
+                    setSelectedInputFileId('');
+                }
+            } catch (err) {
+                console.error("Erro ao buscar arquivos K-Means para visualização:", err);
+                setFilesError("Não foi possível carregar arquivos de agrupamento K-Means.");
+            } finally {
+                setLoadingFiles(false);
+            }
+        };
+        fetchFiles();
+    }, [navigate]);
+
+
+    // NOVO: Fetch a lista de arquivos de arquétipos disponíveis
+    useEffect(() => {
+        const fetchArchetypeFiles = async () => {
+            try {
+                setLoadingArchetypeFiles(true);
+                setArchetypeFilesError(null);
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get('/api/files/', {
+                    headers: { 'Authorization': `Token ${token}` },
+                    params: { file_type: 'ARCHETYPE' }
+                });
+                console.log("DEBUG: Arquivos de Arquétipos recebidos do backend:", response.data);
+
+                const filteredOnlyArchetypes = response.data.filter(file => file.file_type === 'ARCHETYPE');
+                setAvailableArchetypeFiles(filteredOnlyArchetypes);
+
+                if (filteredOnlyArchetypes.length > 0) {
+                    setSelectedArchetypeFileId(filteredOnlyArchetypes[0].id.toString());
+                } else {
+                    setSelectedArchetypeFileId('');
+                }
+            } catch (err) {
+                console.error("Erro ao buscar arquivos de arquétipos:", err);
+                setArchetypeFilesError("Não foi possível carregar arquivos de arquétipos.");
+            } finally {
+                setLoadingArchetypeFiles(false);
+            }
+        };
+        fetchArchetypeFiles();
+    }, []);
+
+
+    const handleFileSelection = (fileId) => {
+        setSelectedInputFileId(fileId);
+    };
+
+    // 2. Quando o arquivo de entrada é selecionado, carregar seus indicadores para o dropdown de features
+    useEffect(() => {
+        const fetchIndicatorsFromFile = async () => {
+            if (!selectedInputFileId) {
+                setAvailableFeaturesForClustering([]);
+                setFeaturesForClustering([]);
+                return;
+            }
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await axios.get(`/api/files/${selectedInputFileId}/data/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = response.data;
+                if (data.length > 0) {
+                    const firstItem = data[0];
+                    const metadataColumns = ['cod_mun_ibge_6', 'municipio', 'UF', 'cod_mun_ibge_7', 'perfil', 'nome_uf', 'ANO', 'populacao'];
+                    const indicators = Object.keys(firstItem).filter(key =>
+                    !metadataColumns.includes(key) && firstItem[key] !== null && firstItem[key] !== undefined && !isNaN(parseFloat(String(firstItem[key]).replace(',', '.')))
+                    );
+                    setAvailableFeaturesForClustering(indicators);
+                    setFeaturesForClustering([]); // Não seleciona por padrão em visualizador, usuário escolhe
+                } else {
+                    setAvailableFeaturesForClustering([]);
+                    setFeaturesForClustering([]);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar indicadores do arquivo:", err);
+                setAvailableFeaturesForClustering([]);
+                setFeaturesForClustering([]);
+            }
+        };
+        fetchIndicatorsFromFile();
+    }, [selectedInputFileId]);
+
+
+    // Este useEffect dispara o `useAnalysisData` quando `selectedInputFileId` muda
+    useEffect(() => {
+        setHookSelectedFileId(selectedInputFileId);
+    }, [selectedInputFileId, setHookSelectedFileId]);
+
+
+    // -----------------------------------------------------
+    // Lógica para Popular Dropdowns de Clusters e Perfis
+    // (Depende de allData vindo do useAnalysisData)
+    // -----------------------------------------------------
+    useEffect(() => {
+        console.log("DEBUG: Running useEffect for clusters and profiles dropdowns...");
+        if (allData && Array.isArray(allData) && allData.length > 0) {
+            const uniqueClusterNums = [...new Set(allData.map(item => item.cluster_num))]
+            .filter(num => num !== null && num !== undefined)
+            .sort((a, b) => a - b);
+            setAvailableClusters(uniqueClusterNums);
+            console.log("DEBUG: Available Clusters:", uniqueClusterNums);
+            if (uniqueClusterNums.length > 0 && selectedClusterId === '') {
+                setSelectedClusterId('');
+            }
+
+            const uniqueProfiles = [...new Set(allData.map(item => item.perfil))]
+            .filter(Boolean)
+            .sort((a, b) => String(a).localeCompare(String(b)));
+            setAvailableProfiles(uniqueProfiles);
+            console.log("DEBUG: Available Profiles:", uniqueProfiles);
+            if (uniqueProfiles.length > 0 && selectedProfile === '') {
+                setSelectedProfile('');
+            }
+        } else {
+            setAvailableClusters([]);
+            setSelectedClusterId('');
+            setAvailableProfiles([]);
+            setSelectedProfile('');
+            console.log("DEBUG: allData is empty or not an array. Resetting cluster/profile dropdowns.");
+        }
+    }, [allData, selectedClusterId, selectedProfile]);
+
+    // -----------------------------------------------------
+    // Filtragem de Dados K-Means para os Gráficos
+    // (Depende de allData e dos filtros selecionados)
+    // -----------------------------------------------------
+    const filteredKMeansData = useMemo(() => {
+        console.log("DEBUG: Recalculating filteredKMeansData...");
+        console.log("DEBUG: Current filters - UF:", selectedUf, "Year:", selectedYear, "Cluster:", selectedClusterId, "Profile:", selectedProfile);
+        if (!allData || allData.length === 0 || !selectedYear) {
+            console.log("DEBUG: filteredKMeansData: allData is empty, or selectedYear is missing.");
+            return [];
+        }
+
+        let currentData = allData.filter(item => item.ANO === selectedYear);
+        console.log("DEBUG: Data after year filter (count):", currentData.length);
+
+        if (selectedUf && selectedUf !== 'BR') {
+            const ufConfigForFilter = UF_CONFIGS[selectedUf];
+            if (ufConfigForFilter && ufConfigForFilter.ibgePrefix) {
+                currentData = currentData.filter(item => String(item.cod_mun_ibge_7).startsWith(ufConfigForFilter.ibgePrefix));
+            } else {
+                currentData = currentData.filter(item => item.UF === selectedUf);
+            }
+            console.log("DEBUG: Data after UF filter (count):", currentData.length);
+        }
+
+        if (selectedClusterId !== '' && selectedClusterId !== null) {
+            currentData = currentData.filter(item => String(item.cluster_num) === String(selectedClusterId));
+            console.log("DEBUG: Data after Cluster filter (count):", currentData.length);
+        }
+
+        if (selectedProfile && selectedProfile !== 'Todos') {
+            currentData = currentData.filter(item => item.perfil === selectedProfile);
+            console.log("DEBUG: Data after Profile filter (count):", currentData.length);
+        }
+        console.log("DEBUG: Final filteredKMeansData (count):", currentData.length);
+        return currentData;
+    }, [allData, selectedYear, selectedUf, selectedClusterId, selectedProfile]);
+
+
+    // Mapa de Clusters por Estado/Brasil
+    const kmeansMapChartData = useMemo(() => {
+        console.log("DEBUG: Recalculating kmeansMapChartData...");
+        console.log("DEBUG: geojson:", geojson ? "Loaded" : "Not Loaded", "filteredKMeansData count:", filteredKMeansData?.length);
+
+        if (!geojson || !filteredKMeansData || filteredKMeansData.length === 0) {
+            console.log("DEBUG: kmeansMapChartData: GeoJSON or filteredKMeansData is missing/empty.");
+            return null;
+        }
+
+        const municipalityDataMap = new Map();
+        filteredKMeansData.forEach(item => {
+            // ⭐ CORREÇÃO AQUI: Usar cod_mun_ibge_6 para a chave do mapa (como discutido) ⭐
+            // Assumindo que seu GeoJSON usa códigos IBGE de 6 dígitos.
+            // O seu CSV de K-means deve ter a coluna 'cod_mun_ibge_6'
+            municipalityDataMap.set(String(item.cod_mun_ibge_7), {
+                value: item.perfil || String(item.cluster_num),
+                                    color: item.cor || null
+            });
+        });
+        console.log("DEBUG: municipalityDataMap size:", municipalityDataMap.size);
+
+        const locations = [];
+        const zValues = [];
+        const textValues = [];
+        const markerColors = [];
+
+        const allPossibleZValues = [...new Set(filteredKMeansData.map(item => item.perfil || String(item.cluster_num)))]
+        .filter(Boolean)
+        .sort((a,b) => String(a).localeCompare(String(b)));
+
+        const discreteColorsMap = {};
+        allPossibleZValues.forEach((val, index) => {
+            const sampleItem = filteredKMeansData.find(item => (item.perfil || String(item.cluster_num)) === val);
+            if (sampleItem && sampleItem.cor) {
+                discreteColorsMap[val] = sampleItem.cor;
+            } else {
+                discreteColorsMap[val] = DEFAULT_PROFILE_COLORS[index % DEFAULT_PROFILE_COLORS.length];
+            }
+        });
+        console.log("DEBUG: Discrete Colors Map:", discreteColorsMap);
+
+
+        geojson.features.forEach(feature => {
+            const geoId = String(feature.properties[GEOJSON_ID_KEY]); // ID do GeoJSON (presumivelmente 6 dígitos)
+        const clusterInfo = municipalityDataMap.get(geoId); // Tenta buscar pelo ID do GeoJSON
+        const municipioName = feature.properties.nome;
+        const ufCodeFromGeoId = String(feature.properties[GEOJSON_ID_KEY]).substring(0,2);
+        const ufNameInGeojson = UF_CONFIGS[Object.keys(UF_CONFIGS).find(key => UF_CONFIGS[key].ibgePrefix === ufCodeFromGeoId)]?.nome || feature.properties.UF || ufCodeFromGeoId;
+
+        locations.push(geoId);
+
+        if (clusterInfo && clusterInfo.value !== null && clusterInfo.value !== undefined) {
+            zValues.push(clusterInfo.value);
+            markerColors.push(clusterInfo.color || discreteColorsMap[clusterInfo.value]);
+            textValues.push(`${municipioName} (${ufNameInGeojson})<br>Perfil: ${clusterInfo.value}`);
+        } else {
+            zValues.push(null);
+            markerColors.push('#cccccc');
+            textValues.push(`${municipioName} (${ufNameInGeojson})<br>Sem dados de cluster para este ano/filtros.`);
+        }
+        });
+
+        const nonNullZValuesCount = zValues.filter(v => v !== null).length;
+        console.log(`DEBUG MAP: Count of non-null ZValues (filled municipalities): ${nonNullZValuesCount}`);
+
+        console.log("DEBUG: Final Locations count for map:", locations.length);
+        console.log("DEBUG: Final ZValues count for map:", zValues.length);
+        console.log("DEBUG: Sample Locations (first 10, real IDs):", locations.slice(0, 10));
+        console.log("DEBUG: Sample ZValues (first 10, real values):", zValues.slice(0, 10));
+
+        const sampleColors = markerColors.filter(color => color !== '#cccccc').slice(0,5);
+        console.log("DEBUG: Sample non-grey MarkerColors:", sampleColors);
+
+
+        if (locations.length === 0) {
+            console.log("DEBUG: kmeansMapChartData: No locations to plot.");
+            return null;
+        }
+
+        return [{
+            type: 'choropleth',
+            geojson: geojson,
+            locations: locations,
+            z: zValues,
+            text: textValues,
+            hoverinfo: 'text',
+            featureidkey: `properties.${GEOJSON_ID_KEY}`,
+            marker: {
+                line: { color: 'white', width: 0.5 },
+                color: markerColors
+            },
+            showscale: false,
+        }];
+    }, [geojson, filteredKMeansData, selectedUf, selectedYear, selectedClusterId, selectedProfile]);
+
+    const kmeansMapTitle = useMemo(() => {
+        const ufName = UF_CONFIGS[selectedUf]?.nome || 'Brasil';
+        let title = `Agrupamento K-Means por Perfis em ${ufName} (${selectedYear})`;
+        if (selectedClusterId !== '' && selectedClusterId !== null) title += `<br>Cluster: ${selectedClusterId}`;
+        if (selectedProfile && selectedProfile !== 'Todos') title += ` - Perfil: ${selectedProfile}`;
+        return title;
+    }, [selectedUf, selectedYear, selectedClusterId, selectedProfile]);
+
+
+    // -----------------------------------------------------
+    // Guardas de Renderização
+    // -----------------------------------------------------
+    let feedbackMessage = null;
+
+    if (hookError) feedbackMessage = <p className="text-red-500">Erro ao carregar dados do K-Means: {hookError}</p>;
+    else if (hookLoading || loadingFiles || loadingMap) feedbackMessage = <p>Carregando dados...</p>;
+    else if (filesError) feedbackMessage = <p className="text-red-500">{filesError}</p>;
+    else if (availableFiles.length === 0) feedbackMessage = <p>Nenhum ficheiro de agrupamento K-Means disponível. Use a pipeline de K-Means para gerar um.</p>;
+    else if (!selectedInputFileId) feedbackMessage = <p>Por favor, selecione um ficheiro de agrupamento K-Means.</p>;
+    else if (allData.length === 0 && !hookLoading) feedbackMessage = <p>O ficheiro K-Means selecionado está vazio ou não contém dados válidos. Verifique o conteúdo do arquivo.</p>;
+    else if (filteredKMeansData.length === 0 && allData.length > 0) feedbackMessage = <p>Nenhum dado encontrado para os filtros selecionados (UF/Ano/Cluster/Perfil). Tente ajustar os filtros.</p>;
+    else if (!geojson) feedbackMessage = <p>Não foi possível carregar o mapa GeoJSON para {selectedUf} (ou Brasil). Verifique os arquivos.</p>;
+    else if (!kmeansMapChartData) feedbackMessage = <p>Mapa carregado, mas sem dados de agrupamento correspondentes para exibir.</p>;
+
+
+    // -----------------------------------------------------
+    // Componentes de Controle
+    // -----------------------------------------------------
+    const controls = (
+        <>
+        <label className="flex flex-col">
+        Arquivo de Agrupamento K-Means:
+        <select
+        value={selectedInputFileId}
+        onChange={(e) => setSelectedInputFileId(e.target.value)}
+        className="p-2 border rounded-md"
+        >
+        <option value="">Selecione um arquivo de K-Means</option>
+        {Array.isArray(availableFiles) && availableFiles.map(file => (
+            <option key={file.id} value={file.id}>
+            {file.filename} (Upload: {new Date(file.uploaded_at).toLocaleDateString()})
+            </option>
+        ))}
+        </select>
+        </label>
+
+        <label className="flex flex-col">
+        Estado (UF):
+        <select
+        value={selectedUf}
+        onChange={(e) => setSelectedUf(e.target.value)}
+        className="p-2 border rounded-md"
+        >
+        <option value="BR">Brasil</option>
+        {Array.isArray(availableUfs) && availableUfs.map(ufCode => (
+            <option key={ufCode} value={ufCode}>{ufCode}</option>
+        ))}
+        </select>
+        </label>
+
+        <label className="flex flex-col">
+        Ano:
+        <select
+        value={selectedYear}
+        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+        className="p-2 border rounded-md"
+        >
+        {Array.isArray(availableYears) && availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+        ))}
+        </select>
+        </label>
+
+        <label className="flex flex-col">
+        Número do Cluster:
+        <select
+        value={selectedClusterId}
+        onChange={(e) => setSelectedClusterId(e.target.value === '' ? null : parseInt(e.target.value))}
+        className="p-2 border rounded-md"
+        disabled={availableClusters.length === 0}
+        >
+        <option value="">Todos os Clusters</option>
+        {availableClusters.map(clusterNum => (
+            <option key={clusterNum} value={clusterNum}>{clusterNum}</option>
+        ))}
+        </select>
+        </label>
+
+        <label className="flex flex-col">
+        Perfil de Saúde:
+        <select
+        value={selectedProfile}
+        onChange={(e) => setSelectedProfile(e.target.value)}
+        className="p-2 border rounded-md"
+        disabled={availableProfiles.length === 0}
+        >
+        <option value="">Todos os Perfis</option>
+        {availableProfiles.map(profileName => (
+            <option key={profileName} value={profileName}>{profileName}</option>
+        ))}
+        </select>
+        </label>
+        </>
+    );
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+        Visualizador de Agrupamentos K-Means
+        </h1>
+
+        {/* Controles de Filtro */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-wrap gap-4 items-center justify-center">
+        {controls}
+        </div>
+
+        {/* Mensagem de Feedback Global */}
+        {feedbackMessage && (
+            <div className="text-center p-4 bg-yellow-100 text-yellow-800 rounded-lg shadow-md mb-8">
+            {feedbackMessage}
+            </div>
+        )}
+
+        {/* Renderiza o conteúdo principal apenas se não houver feedback de erro/carregamento */}
+        {!feedbackMessage && (
+            <div className="grid grid-cols-1 gap-6 mt-6">
+            {/* Mapa de Clusters por Estado/Brasil */}
+            <div className="bg-white p-4 rounded-lg shadow-md h-[600px] w-full">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Mapa de Agrupamentos por Perfil</h2>
+            {kmeansMapChartData && (
+                <Plot
+                data={kmeansMapChartData}
+                layout={{
+                    title: {
+                        text: kmeansMapTitle,
+                        font: { size: 20, color: '#333' },
+                        xref: 'paper', x: 0.05, xanchor: 'left', yanchor: 'top',
+                    },
+                    geo: {
+                        scope: selectedUf === 'BR' ? 'south america' : 'countries',
+                        fitbounds: selectedUf !== 'BR' ? 'locations' : false,
+                        center: selectedUf === 'BR' ? { lat: -14, lon: -50 } : ufMapConfig?.center,
+                        lataxis: selectedUf === 'BR' ? { range: [-35, 5] } : {},
+                        lonaxis: selectedUf === 'BR' ? { range: [-75, -30] } : {},
+                        showland: true, landcolor: 'rgb(243,243,243)',
+                                    countrycolor: 'rgb(204,204,204)', projection: { type: 'mercator' },
+                                    visible: false,
+                                    subunitcolor: 'rgb(204,204,243)', coastlinecolor: 'rgb(204,204,204)',
+                    },
+                    margin: { t: 50, b: 20, l: 20, r: 20 }, autosize: true,
+                }}
+                config={{ responsive: true, displayModeBar: false }}
+                className="w-full h-full"
+                />
+            )}
+            </div>
+
+            {/* Placeholder para outros gráficos K-means (ex: Características de Cluster, Tabela de Perfis) */}
+            <div className="bg-white p-4 rounded-lg shadow-md w-full h-[300px]">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Métricas do Cluster (Detalhes Futuros)</h2>
+            <p className="text-gray-500">Exibirá características médias dos clusters aqui.</p>
+            </div>
+            </div>
+        )}
+        </div>
+    );
+};
+
+export default KMeansPerfisSaudePage;

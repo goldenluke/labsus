@@ -1,0 +1,182 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import Plot from 'react-plotly.js';
+import usePageTitle from '../../hooks/usePageTitle';
+import { useFluxoPacientesData } from '../../hooks/useFluxoPacientesData';
+import FeedbackMessage from '../../components/common/FeedbackMessage';
+import InfoCard from '../../components/common/InfoCard';
+import { FiDownload } from 'react-icons/fi';
+import { UF_CONFIGS } from '../../config/ufConfigs';
+
+const plasmaColorScale = (value) => {
+    const colors = [ [0.0, [13, 8, 135]], [0.1, [70, 3, 163]], [0.2, [118, 0, 168]], [0.3, [160, 20, 146]], [0.4, [195, 56, 120]], [0.5, [222, 92, 91]], [0.6, [241, 130, 63]], [0.7, [252, 169, 40]], [0.8, [252, 208, 26]], [0.9, [240, 249, 23]], [1.0, [255, 255, 255]] ];
+    for (let i = 0; i < colors.length - 1; i++) {
+        const c1_val = colors[i][0]; const c2_val = colors[i + 1][0];
+        if (value >= c1_val && value <= c2_val) {
+            const t = (value - c1_val) / (c2_val - c1_val);
+            const c1_rgb = colors[i][1]; const c2_rgb = colors[i + 1][1];
+            const r = Math.round(c1_rgb[0] * (1 - t) + c2_rgb[0] * t);
+            const g = Math.round(c1_rgb[1] * (1 - t) + c2_rgb[1] * t);
+            const b = Math.round(c1_rgb[2] * (1 - t) + c2_rgb[2] * t);
+            return `rgb(${r},${g},${b})`;
+        }
+    }
+    return `rgb(13, 8, 135)`;
+};
+
+const FluxoPacientesViewerPage = () => {
+    usePageTitle('Dashboard de Fluxo de Pacientes');
+
+    const {
+        loading, error, fileDetails, availableFiles, selectedFileId, setSelectedFileId,
+        flowData, filteredFlowData, availableUfs, selectedUf, setSelectedUf,
+        minPacientes, setMinPacientes,
+        loadingMap, geojson,
+        rankingData,
+        polosSankeyOptions, selectedPolo, setSelectedPolo, sankeyDataAndLayout
+    } = useFluxoPacientesData();
+
+    const mapPlotData = useMemo(() => {
+        if (!filteredFlowData || !filteredFlowData.length) return null;
+        if (selectedUf !== 'BR' && !geojson) return null;
+
+        const dataForMap = selectedUf === 'BR' ? filteredFlowData : filteredFlowData.filter(d => d.uf_destino === selectedUf || d.uf_origem === selectedUf);
+        const validDataForMap = dataForMap.filter(d => !isNaN(d.lat_origem) && !isNaN(d.lon_origem) && !isNaN(d.lat_destino) && !isNaN(d.lon_destino));
+        if (validDataForMap.length === 0) return null;
+
+        let traces = [];
+        if (geojson) {
+            traces.push({
+                type: 'choroplethmapbox', geojson: geojson, locations: geojson.features.map(f => f.properties.id),
+                        z: geojson.features.map(() => 0), featureidkey: 'properties.id',
+                        colorscale: [['0', '#E9E9E9'], ['1', '#E9E9E9']], showscale: false,
+                        hoverinfo: 'skip', marker: { line: { color: '#666666', width: 0.7 } }
+            });
+        }
+
+        const minPacientesLog = Math.log(Math.min(...validDataForMap.map(d => d.N_PACIENTES).filter(n => n > 0)) || 1);
+        const maxPacientesLog = Math.log(Math.max(...validDataForMap.map(d => d.N_PACIENTES)) || 1);
+        const flowLinesTraces = validDataForMap.map(row => ({
+            type: 'scattermapbox',
+            lon: [row.lon_origem, row.lon_destino], lat: [row.lat_origem, row.lat_destino],
+            mode: 'lines',
+            line: { width: 1 + (((Math.log(row.N_PACIENTES) - minPacientesLog) / (maxPacientesLog - minPacientesLog || 1)) * 4), color: plasmaColorScale((Math.log(row.N_PACIENTES) - minPacientesLog) / (maxPacientesLog - minPacientesLog || 1)) },
+                                                            hoverinfo: 'text', text: `De: ${row.municipio_origem}/${row.uf_origem}<br>Para: ${row.municipio_destino}/${row.uf_destino}<br>Nº Pacientes: ${row.N_PACIENTES}`,
+                                                            below: '',
+        }));
+        return [...traces, ...flowLinesTraces];
+    }, [filteredFlowData, selectedUf, geojson]);
+
+    if (loading) return <FeedbackMessage message="A carregar..." />;
+    if (error) return <FeedbackMessage message={`Erro: ${error}`} type="error" />;
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-3xl text-center text-gray-800 mb-8">Dashboard - Análise de Fluxo de Pacientes</h1>
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <label className="flex flex-col font-semibold">Selecione o ficheiro de análise:
+        <select value={selectedFileId} onChange={e => setSelectedFileId(e.target.value)} className="p-2 border rounded-md mt-1 font-normal">
+        <option value="">-- Selecione um ficheiro --</option>
+        {availableFiles.map(file => (<option key={file.id} value={file.id}>{file.filename}</option>))}
+        </select>
+        </label>
+        </div>
+        {!selectedFileId && !loading && <FeedbackMessage message="Por favor, selecione um ficheiro para começar." type="info" />}
+        {selectedFileId && fileDetails && (
+            <>
+            <div className="bg-white p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Ficheiro de Análise:</h2>
+            <p className="text-gray-700 text-sm mb-1"><span className="font-medium">Nome:</span> {fileDetails.filename}</p>
+            <p className="text-gray-700 text-sm mt-2"><span className="font-medium">Parâmetros:</span> {fileDetails.description}</p>
+            </div>
+            <a href={fileDetails.file} download={fileDetails.filename} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center flex-shrink-0 mt-4 md:mt-0">
+            <FiDownload className="mr-2" /> Baixar CSV
+            </a>
+            </div>
+            <InfoCard title="Mapa de Fluxo Intermunicipal">
+            <p>O mapa exibe as rotas de deslocamento de pacientes. A cor e a espessura da linha indicam o volume de pacientes: linhas mais espessas e claras representam um fluxo maior.</p>
+            </InfoCard>
+            <div className="bg-white p-4 rounded-lg shadow-md h-[700px] w-full mt-4">
+            <div className="flex flex-wrap gap-4 p-4 items-center">
+            <label className="flex flex-col font-semibold">Focar em UF:
+            <select value={selectedUf} onChange={e => setSelectedUf(e.target.value)} className="p-2 border rounded-md mt-1 font-normal">
+            {availableUfs.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+            </select>
+            </label>
+            <label className="flex flex-col font-semibold w-full max-w-xs">Mínimo de Pacientes por Fluxo: {minPacientes}
+            <input type="range" min="1" max="100" step="1" value={minPacientes} onChange={e => setMinPacientes(parseInt(e.target.value, 10))} className="w-full" />
+            </label>
+            <div className="text-sm text-gray-600 ml-4">
+            Mostrando <strong>{filteredFlowData.length}</strong> de <strong>{flowData.length}</strong> rotas de fluxo.
+            </div>
+            </div>
+            {(loadingMap) ? <p className="flex items-center justify-center h-full">A carregar mapa base...</p> : (mapPlotData ?
+                <Plot
+                key={`${selectedFileId}-${selectedUf}-${minPacientes}`}
+                data={mapPlotData}
+                layout={{
+                    showlegend: false,
+                    margin: { t: 0, b: 0, l: 0, r: 0 },
+                    mapbox: {
+                        accesstoken: 'pk.eyJ1IjoibHVjYXNkb3VyYWRvIiwiYSI6ImNtZG1mbnQybzFsODUya29zNm40OXI1dWkifQ.QHkqc3MJcfn9Dave7ow0Yg',
+                        style: "light",
+                        center: {
+                            lon: UF_CONFIGS[selectedUf]?.center?.lon || -54,
+                            lat: UF_CONFIGS[selectedUf]?.center?.lat || -15
+                        },
+                        zoom: UF_CONFIGS[selectedUf]?.zoom ? UF_CONFIGS[selectedUf].zoom - 0.5 : 3.5,
+                    }
+                }}
+                config={{ responsive: true, displayModeBar: false }}
+                className="w-full h-[calc(100%-100px)]"
+                />
+                : <p className="flex items-center justify-center h-full">Sem dados de fluxo para exibir com os filtros atuais.</p>)}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                <div className="space-y-4">
+                <InfoCard title="Principais Polos de Atendimento">
+                <p>Este gráfico mostra os 10 municípios que mais receberam pacientes de outras cidades.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md h-[500px] w-full">
+                <Plot data={[{ x: rankingData.polos.map(p => p[1]), y: rankingData.polos.map(p => p[0]), type: 'bar', orientation: 'h' }]} layout={{ title: 'Top 10 Municípios de Destino (Polos)', yaxis: { autorange: 'reversed', automargin: true }, xaxis: {title: 'Nº de Pacientes Recebidos'} }} config={{ responsive: true, displayModeBar: false }} className="w-full h-full" />
+                </div>
+                </div>
+                <div className="space-y-4">
+                <InfoCard title="Principais Municípios de Origem">
+                <p>Este gráfico mostra os 10 municípios que mais encaminharam pacientes para outras cidades.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md h-[500px] w-full">
+                <Plot data={[{ x: rankingData.enviadores.map(p => p[1]), y: rankingData.enviadores.map(p => p[0]), type: 'bar', orientation: 'h', marker: {color: '#ff7f0e'} }]} layout={{ title: 'Top 10 Municípios de Origem', yaxis: { autorange: 'reversed', automargin: true }, xaxis: {title: 'Nº de Pacientes Enviados'} }} config={{ responsive: true, displayModeBar: false }} className="w-full h-full" />
+                </div>
+                </div>
+                </div>
+                <div className="mt-8 space-y-4">
+                <InfoCard title="Análise Detalhada do Fluxo para um Polo">
+                <p>Selecione um município de destino (polo) para visualizar em detalhe de quais cidades ele recebe pacientes e em qual volume.</p>
+                </InfoCard>
+                <div className="bg-white p-4 rounded-lg shadow-md w-full">
+                <label className="flex flex-col font-semibold max-w-sm mx-auto mb-4">Selecione um Polo de Atendimento para detalhar:
+                <select value={selectedPolo} onChange={e => setSelectedPolo(e.target.value)} className="p-2 border rounded-md mt-1 font-normal">
+                {polosSankeyOptions.map(polo => <option key={polo} value={polo}>{polo}</option>)}
+                </select>
+                </label>
+                {sankeyDataAndLayout ?
+                    <Plot
+                    data={sankeyDataAndLayout.plotData}
+                    layout={sankeyDataAndLayout.layout}
+                    config={{ responsive: true, displayModeBar: false }}
+                    className="w-full"
+                    />
+                    : <div className="h-[500px] flex items-center justify-center">
+                    <p>Selecione um polo para ver os detalhes do fluxo.</p>
+                    </div>
+                }
+                </div>
+                </div>
+                </>
+        )}
+        </div>
+    );
+};
+
+export default FluxoPacientesViewerPage;

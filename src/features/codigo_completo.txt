@@ -1,0 +1,3881 @@
+
+
+================================================================================
+ARQUIVO: __init__.py
+================================================================================
+
+
+
+================================================================================
+ARQUIVO: acidente_material_biologico.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/acidente_material_biologico.py
+# Indicador: Acidente de Trabalho com Material Biológico (SINAN/ACBI)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "ACBI"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_ACBI"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Acidente de Trabalho com Material Biológico (por 100.000 hab.) a partir do SINAN/ACBI."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Acidente de Trabalho com Material Biológico (SINAN/ACBI).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"acidente_material_biologico_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: acidente_trabalho_grave.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/acidente_trabalho_grave.py
+# Indicador: Acidente de Trabalho Grave (SINAN/ACGR)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "ACGR"
+NOME_INDICADOR = "TAXA_ACIDENTE_TRABALHO"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Acidente de Trabalho Grave (por 100.000 hab.) a partir do SINAN/ACGR."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Acidente de Trabalho Grave (SINAN/ACGR).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"acidente_trabalho_grave_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: acidentes_animais_peconhentos.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/acidentes_animais_peconhentos.py
+# Indicador: Acidente por Animais Peçonhentos (SINAN/ANIM)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "ANIM"
+NOME_INDICADOR = "TAXA_CONF_ANIMAIS_P"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Acidente por Animais Peçonhentos (por 100.000 hab.) a partir do SINAN/ANIM."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1', '2', '3'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Acidente por Animais Peçonhentos (SINAN/ANIM).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"acidentes_animais_peconhentos_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: botulismo.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/botulismo.py
+# Indicador: Botulismo (SINAN/BOTU)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "BOTU"
+NOME_INDICADOR = "TAXA_INCIDENCIA_BOTULISMO"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Botulismo (por 100.000 hab.) a partir do SINAN/BOTU."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Botulismo (SINAN/BOTU).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"botulismo_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: cancer_trabalho.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/cancer_trabalho.py
+# Indicador: Câncer Relacionado ao Trabalho (SINAN/CANC)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "CANC"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_CANCER_TRAB"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Câncer Relacionado ao Trabalho (por 100.000 hab.) a partir do SINAN/CANC."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Câncer Relacionado ao Trabalho (SINAN/CANC).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"cancer_trabalho_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: causas_mal_definidas.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SIM import download as download_sim
+from ..utils.dataloaders import filtrar_populacao
+
+# --- ALTERAÇÃO: Adicionado 'dir_mapas' para flexibilidade ---
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula proporção e taxa de óbitos por causas mal definidas para múltiplas UFs e anos.
+    """
+    resultados = []
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Causas Mal Definidas: {uf}/{ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            # ✅ CORREÇÃO: Lógica de download mais robusta
+            try:
+                sim = download_sim(states=uf, years=ano, groups=["CID10"])
+                # download_sim pode retornar um único ParquetSet, uma lista deles
+                # (ex.: quando o SIM particiona o ano em mais de um arquivo) ou uma
+                # lista vazia quando a competência ainda não foi publicada pelo DATASUS.
+                if isinstance(sim, list):
+                    if not sim:
+                        raise FileNotFoundError(f"Nenhum arquivo SIM disponível para {ano} (dado ainda não publicado).")
+                    df_sim = pd.concat([p.to_dataframe() for p in sim], ignore_index=True)
+                else:
+                    df_sim = sim.to_dataframe()
+
+                # total de óbitos
+                total = df_sim.groupby("CODMUNRES").size().rename("total_obitos")
+                total.index = total.index.astype(str).str[:6]
+
+                # óbitos por causas mal definidas (CID R00–R99)
+                mal = df_sim[df_sim['CAUSABAS'].astype(str).str.startswith('R')]
+                mal_def = mal.groupby("CODMUNRES").size().rename("obitos_mal_definidas")
+                mal_def.index = mal_def.index.astype(str).str[:6]
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar SIM para {uf}/{ano}: {e}")
+                # Cria Series vazias com os nomes corretos para evitar erro no join
+                total = pd.Series(dtype=int, name="total_obitos")
+                mal_def = pd.Series(dtype=int, name="obitos_mal_definidas")
+
+            # --- Junta e calcula indicadores ---
+            df = df_base.join(total, how="left").join(mal_def, how="left").fillna(0)
+            df['total_obitos']         = df['total_obitos'].astype(int)
+            df['obitos_mal_definidas']  = df['obitos_mal_definidas'].astype(int)
+            df['PROP_MAL_DEFINIDAS']    = df.apply(
+                lambda r: (r.obitos_mal_definidas/r.total_obitos*100) if r.total_obitos>0 else 0, axis=1)
+            df['TX_MAL_DEFINIDAS_P10K'] = df.apply(
+                lambda r: (r.obitos_mal_definidas/r.populacao*10000) if r.populacao>0 else 0, axis=1)
+
+            df['UF'] = uf
+
+            resultados.append(df.reset_index())
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Óbitos por Causas Mal Definidas processado com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula óbitos por causas mal definidas para múltiplos estados e anos.")
+
+    # ✅ CORREÇÃO: Parser aprimorado
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs, ex: TO PA MG")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022, 2023], help="Lista de anos")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída. Se não informado, um nome será gerado.")
+
+    args = parser.parse_args()
+
+    df = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"obitos_causas_mal_definidas_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+
+================================================================================
+ARQUIVO: chagas.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/chagas.py
+# Indicador: Doença de Chagas Aguda (SINAN/CHAG)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "CHAG"
+NOME_INDICADOR = "TAXA_INCIDENCIA_CHAGAS"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Doença de Chagas Aguda (por 100.000 hab.) a partir do SINAN/CHAG."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Doença de Chagas Aguda (SINAN/CHAG).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"chagas_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: colera.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/colera.py
+# Indicador: Cólera (SINAN/COLE)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "COLE"
+NOME_INDICADOR = "TAXA_INCIDENCIA_COLERA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de cólera (por 100.000 hab.) a partir do SINAN/COLE."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Cólera (SINAN/COLE).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: coqueluche.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/coqueluche.py
+# Indicador: Coqueluche (SINAN/COQU)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "COQU"
+NOME_INDICADOR = "TAXA_INCIDENCIA_COQU"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Coqueluche (por 100.000 hab.) a partir do SINAN/COQU."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Coqueluche (SINAN/COQU).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"coqueluche_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: dermatoses_ocupacionais.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/dermatoses_ocupacionais.py
+# Indicador: Dermatoses Ocupacionais (SINAN/DERM)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "DERM"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_DERM"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Dermatoses Ocupacionais (por 100.000 hab.) a partir do SINAN/DERM."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Dermatoses Ocupacionais (SINAN/DERM).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"dermatoses_ocupacionais_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: difteria.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/difteria.py
+# Indicador: Difteria (SINAN/DIFT)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "DIFT"
+NOME_INDICADOR = "TAXA_INCIDENCIA_DIFT"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Difteria (por 100.000 hab.) a partir do SINAN/DIFT."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Difteria (SINAN/DIFT).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"difteria_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: doencas_cronicas.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SIH import SIH
+from ..utils.dataloaders import filtrar_populacao
+
+# --- ALTERAÇÃO: Adicionado 'dir_mapas' para flexibilidade ---
+def processar_dados(ufs, anos, arquivo_populacao, meses, **kwargs):
+    """
+    Calcula o indicador de internações por doenças crônicas para múltiplas UFs, anos e meses.
+    """
+    DOENCAS_CID10 = ["I10", "I11", "I12", "I13", "I15", "E10", "E11", "E12", "E13", "E14", "J45", "J46"]
+    df_resultados = []
+
+    processar_por_mes = bool(meses) and len(meses) > 0
+
+    for uf in ufs:
+        for ano in anos:
+            meses_iterar = meses if processar_por_mes else [None]
+
+            for mes in meses_iterar:
+                periodo_str = f"{uf}/{ano}" + (f"/{mes:02d}" if mes else " (ano inteiro)")
+                print(f"\n=== Processando Internações por Doenças Crônicas: {periodo_str} ===")
+
+                df_base = filtrar_populacao(
+                    arquivo_populacao=arquivo_populacao,
+                    uf=uf,
+                    ano=ano
+                )
+                if df_base is None:
+                    continue
+
+                # ✅ CORREÇÃO: Lógica de download mais robusta
+                try:
+                    sih = SIH()
+                    sih.load()
+                    files = sih.get_files(group='RD', uf=uf, year=ano, month=mes)
+
+                    if not files:
+                        print(f"⚠️  Nenhum arquivo SIH encontrado para {periodo_str}")
+                        df_sih = pd.DataFrame() # Cria um DataFrame vazio para continuar
+                    else:
+                        parquet_set = sih.download(files)
+                        df_sih = pd.concat([p.to_dataframe() for p in parquet_set], ignore_index=True)
+
+                except Exception as e:
+                    print(f"❌ Erro ao carregar dados do SIH para {periodo_str}: {e}")
+                    df_sih = pd.DataFrame() # Cria um DataFrame vazio em caso de erro
+
+                # Se o DataFrame estiver vazio ou sem a coluna, cria uma Série de internações vazia
+                if "DIAG_PRINC" not in df_sih.columns:
+                    internacoes = pd.Series(dtype=int, name="n_internacoes")
+                else:
+                    df_cronicas = df_sih[df_sih["DIAG_PRINC"].astype(str).str[:3].isin([cid[:3] for cid in DOENCAS_CID10])].copy()
+                    df_cronicas["MUNIC_RES"] = df_cronicas["MUNIC_RES"].astype(str).str.zfill(6)
+                    internacoes = df_cronicas.groupby("MUNIC_RES").size().rename("n_internacoes")
+
+                # Junta os dados e calcula os indicadores
+                df_base = df_base.join(internacoes, how="left")
+                df_base["n_internacoes"] = df_base["n_internacoes"].fillna(0).astype(int)
+                df_base["DOENCAS_CRONICAS"] = df_base.apply(
+                    lambda row: (row["n_internacoes"] / row["populacao"]) * 10000 if row["populacao"] > 0 else 0,
+                    axis=1
+                )
+
+                df_base["UF"] = uf
+                df_base["MES"] = mes if mes is not None else 0 # 0 para ano inteiro
+                df_resultados.append(df_base.reset_index())
+
+    if df_resultados:
+        df_final = pd.concat(df_resultados, ignore_index=True)
+        print("\n✅ Internações por Doenças Crônicas processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado de internações foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula internações por doenças crônicas por 10 mil habitantes.")
+
+    # ✅ CORREÇÃO: Parser aprimorado
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2024], help="Lista de anos (ex: 2023 2024)")
+    parser.add_argument("--meses", nargs="*", type=int, default=None, help="Lista de meses (ex: 1 2 12). Se não informado, processa o ano inteiro.")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com dados populacionais")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída. Se não informado, um nome será gerado automaticamente.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        meses=args.meses,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            meses_str = '-'.join(map(str, args.meses)) if args.meses else "anual"
+            nome_arquivo = f"internacoes_cronicas_{ufs_str}_{anos_str}_{meses_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 Resultado salvo como: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum dado foi retornado.")
+
+
+
+================================================================================
+ARQUIVO: doencas_exantematicas.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/doencas_exantematicas.py
+# Indicadores: Sarampo e Rubéola (SINAN/EXAN) — mesmo agravo (ficha compartilhada),
+# CLASSI_FIN distingue as duas doenças (1=Sarampo, 2=Rubéola, 3=Descartado), por
+# isso os dois indicadores são calculados a partir de um único download.
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "EXAN"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a Taxa de Incidência de Sarampo e de Rubéola (por 100.000 hab.)
+    a partir do SINAN/EXAN. As duas doenças compartilham a mesma ficha de
+    notificação; CLASSI_FIN='1' confirma Sarampo e CLASSI_FIN='2' confirma
+    Rubéola.
+    """
+    df_sarampo = processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador="TAXA_INCIDENCIA_SARAMPO",
+        coluna_filtro="CLASSI_FIN",
+        codigos_confirmados=["1"],
+    )
+    if df_sarampo.empty:
+        return df_sarampo
+
+    df_rubeola = processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador="TAXA_INCIDENCIA_RUBEOLA",
+        coluna_filtro="CLASSI_FIN",
+        codigos_confirmados=["2"],
+    )
+
+    chaves = [c for c in ["cod_mun_ibge_6", "ANO", "UF"] if c in df_sarampo.columns and c in df_rubeola.columns]
+    if not chaves or df_rubeola.empty:
+        return df_sarampo
+
+    df = df_sarampo.merge(
+        df_rubeola[chaves + ["TAXA_INCIDENCIA_RUBEOLA"]],
+        on=chaves, how="left",
+    )
+    df["TAXA_INCIDENCIA_RUBEOLA"] = df["TAXA_INCIDENCIA_RUBEOLA"].fillna(0)
+    return df
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula as Taxas de Incidência de Sarampo e Rubéola (SINAN/EXAN).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"doencas_exantematicas_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: equipes_esf_taxa.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.CNES import CNES
+from ..utils.dataloaders import filtrar_populacao
+
+def processar_dados(ufs, anos, arquivo_populacao, meses, **kwargs):
+    """
+    Calcula a Taxa de Equipes de Saúde da Família (eSF) por 10.000 habitantes
+    para múltiplas UFs, anos e meses (opcional).
+    """
+    df_resultados = []
+
+    try:
+        cnes_db = CNES()
+        cnes_db.load(groups=['EP'])
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do CNES: {e}")
+        return pd.DataFrame()
+
+    processar_por_mes = bool(meses) and len(meses) > 0
+
+    for uf in ufs:
+        for ano in anos:
+            meses_iterar = meses if processar_por_mes else [None]
+
+            for mes in meses_iterar:
+                periodo_str = f"{uf}/{ano}" + (f"/{mes:02d}" if mes else " (ano inteiro)")
+                print(f"\n=== Processando Taxa de Equipes ESF: {periodo_str} ===")
+
+                df_base = filtrar_populacao(
+                    arquivo_populacao=arquivo_populacao,
+                    uf=uf,
+                    ano=ano
+                )
+                if df_base is None:
+                    continue
+
+                try:
+                    meses_download = [mes] if mes else list(range(1, 13))
+
+                    files = cnes_db.get_files(group='EP', uf=uf, year=ano, month=meses_download)
+                    if not files:
+                        raise FileNotFoundError(f"Nenhum arquivo CNES/EP encontrado para {periodo_str}")
+
+                    print(f"      -> Baixando {len(files)} arquivo(s) do CNES/EP...")
+                    downloaded_files = cnes_db.download(files)
+
+                    df_list = [pd.read_parquet(p.path) for p in downloaded_files]
+                    if not df_list:
+                        raise ValueError("Nenhum dado pode ser lido dos arquivos baixados.")
+
+                    df_cnes_ep = pd.concat(df_list, ignore_index=True)
+
+                except Exception as e:
+                    print(f"❌ Erro ao carregar dados do CNES para {periodo_str}: {e}")
+                    df_cnes_ep = pd.DataFrame()
+
+                if df_cnes_ep.empty or 'TIPO_EQP' not in df_cnes_ep.columns or 'CODUFMUN' not in df_cnes_ep.columns:
+                    print("      -> [AVISO] DataFrame vazio ou colunas essenciais não encontradas.")
+                    contagem_equipes = pd.Series(dtype=int, name="n_equipes_esf")
+                else:
+                    # ✅ --- CORREÇÃO FINAL E DEFINITIVA ---
+                    # O código para Equipe de Saúde da Família (eSF) é '70'.
+                    df_esf = df_cnes_ep[df_cnes_ep['TIPO_EQP'].astype(str).str.strip() == '70'].copy()
+                    print(f"      -> [INFO] Encontradas {len(df_esf)} entradas de Equipes de Saúde da Família (código 70).")
+
+                    # ⚠️ CORREÇÃO: a coluna do CNES/EP se chama 'IDEQUIPE' (sem underscore),
+                    # não 'ID_EQUIPE'. Com o nome errado, o `if` abaixo nunca era verdadeiro
+                    # e o código caía sempre no ramo `size()`, contando linhas em vez de
+                    # equipes distintas — ao baixar os 12 meses do ano (padrão quando nenhum
+                    # mês é informado), a mesma equipe (IDEQUIPE estável mês a mês) era
+                    # contada uma vez por mês em que aparecia, inflando a taxa anual em ~12x.
+                    if 'IDEQUIPE' in df_esf.columns:
+                        contagem_equipes = df_esf.groupby('CODUFMUN')['IDEQUIPE'].nunique().rename('n_equipes_esf')
+                    else:
+                        contagem_equipes = df_esf.groupby('CODUFMUN').size().rename('n_equipes_esf')
+
+                    contagem_equipes.index = contagem_equipes.index.astype(str)
+
+                # Junta os dados e calcula a taxa
+                df = df_base.join(contagem_equipes, how="left")
+                df["n_equipes_esf"] = df["n_equipes_esf"].fillna(0).astype(int)
+                df["TAXA_EQUIPES_ESF"] = df.apply(
+                    lambda row: (row["n_equipes_esf"] / row["populacao"]) * 10000 if row["populacao"] > 0 else 0,
+                    axis=1
+                )
+                df["UF"] = uf
+                df["MES"] = mes if mes is not None else 0
+
+                df_resultados.append(df.reset_index())
+
+    if df_resultados:
+        df_final = pd.concat(df_resultados, ignore_index=True)
+        print("\n✅ Taxa de Equipes de Saúde da Família processada com sucesso.")
+        return df_final
+    else:
+        print("\n⚠️ Nenhum dado de equipes foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a taxa de Equipes de Saúde da Família por 10.000 habitantes.")
+
+    # ... (seus argumentos do parser continuam os mesmos) ...
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2024], help="Lista de anos (ex: 2023 2024)")
+    parser.add_argument("--meses", nargs="*", type=int, default=None, help="Meses para processar. Se não informado, usa o ano inteiro.")
+    parser.add_argument("--pop", type=str, default="outputs/csv/populacao_estimada_completa_spline.csv", help="Arquivo CSV com dados populacionais")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        meses=args.meses,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            meses_str = '-'.join(map(str, args.meses)) if args.meses else "anual"
+
+            nome_arquivo = f"taxa_equipes_esf_{ufs_str}_{anos_str}_{meses_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 Resultado salvo em: '{caminho_saida_csv}'")
+    else:
+        print("\n⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: esquistossomose.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/esquistossomose.py
+# Indicador: Esquistossomose (SINAN/ESQU)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "ESQU"
+NOME_INDICADOR = "TAXA_INCIDENCIA_ESQU"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Esquistossomose (por 100.000 hab.) a partir do SINAN/ESQU."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Esquistossomose (SINAN/ESQU).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"esquistossomose_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: febre_maculosa.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/febre_maculosa.py
+# Indicador: Febre Maculosa (SINAN/FMAC)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "FMAC"
+NOME_INDICADOR = "TAXA_INCIDENCIA_FMAC"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Febre Maculosa (por 100.000 hab.) a partir do SINAN/FMAC."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Febre Maculosa (SINAN/FMAC).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"febre_maculosa_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: febre_tifoide.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/febre_tifoide.py
+# Indicador: Febre Tifóide (SINAN/FTIF)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "FTIF"
+NOME_INDICADOR = "TAXA_INCIDENCIA_FTIF"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Febre Tifóide (por 100.000 hab.) a partir do SINAN/FTIF."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Febre Tifóide (SINAN/FTIF).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"febre_tifoide_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: hanseniase.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SINAN import SINAN
+from ..utils.dataloaders import filtrar_populacao
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a Taxa de Detecção de Casos Novos de Hanseníase por 100.000 habitantes,
+    utilizando uma lógica de processamento de dados robusta e à prova de falhas.
+    """
+    resultados = []
+
+    try:
+        sinan_db = SINAN()
+        sinan_db.load()
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do SINAN: {e}")
+        return pd.DataFrame()
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Taxa de Detecção de Hanseníase: {uf}/{ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            try:
+                files = sinan_db.get_files(dis_code='HANS', year=ano)
+                if not files:
+                    raise FileNotFoundError(f"Nenhum arquivo SINAN/HANS encontrado para o ano {ano}")
+
+                downloaded_data = sinan_db.download(files)
+
+                # ✅ --- CORREÇÃO FINAL: Lógica completa para tratar todos os retornos possíveis ---
+                df_sinan = pd.DataFrame()
+                if isinstance(downloaded_data, list):
+                    # Caso 1: Retorna uma lista de Parquets
+                    df_sinan = pd.concat([p.to_dataframe() for p in downloaded_data], ignore_index=True)
+                elif hasattr(downloaded_data, "_parquets"):
+                    # Caso 2: Retorna um objeto que contém a lista no atributo _parquets
+                    df_sinan = pd.concat([p.to_dataframe() for p in downloaded_data._parquets], ignore_index=True)
+                elif hasattr(downloaded_data, "to_dataframe"):
+                    # Caso 3: Retorna um único objeto com método to_dataframe()
+                    df_sinan = downloaded_data.to_dataframe()
+                else:
+                    raise TypeError("O objeto baixado do SINAN não é de um tipo esperado e não pôde ser convertido para DataFrame.")
+                # --- FIM DA CORREÇÃO ---
+
+                if df_sinan.empty:
+                    raise ValueError("DataFrame do SINAN/HANS está vazio após o download.")
+
+                # Filtros epidemiológicos (ano do diagnóstico e casos novos)
+                df_sinan['DT_DIAG'] = pd.to_datetime(df_sinan['DT_DIAG'], errors='coerce')
+                df_sinan.dropna(subset=['DT_DIAG'], inplace=True)
+                df_sinan_ano = df_sinan[df_sinan['DT_DIAG'].dt.year == ano].copy()
+
+                df_casos_novos = df_sinan_ano
+                if 'MODOENTR' in df_sinan_ano.columns:
+                    df_casos_novos = df_sinan_ano[df_sinan_ano['MODOENTR'].astype(str) == '1'].copy()
+
+                # Filtro por UF de residência
+                uf_code_str = df_base.index.str[:2].unique()[0]
+                df_casos_novos_uf = df_casos_novos[df_casos_novos['ID_MN_RESI'].astype(str).str.startswith(uf_code_str)]
+
+                # Contagem dos casos
+                casos = df_casos_novos_uf.groupby('ID_MN_RESI').size().rename("casos_novos_hanseniase")
+                casos.index = casos.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar dados do SINAN para {uf}/{ano}: {e}")
+                casos = pd.Series(dtype=int, name="casos_novos_hanseniase")
+
+            # --- Junção e Cálculo do Indicador ---
+            df = df_base.join(casos, how="left").fillna(0)
+            df['casos_novos_hanseniase'] = df['casos_novos_hanseniase'].astype(int)
+            df['TAXA_DETECCAO_HANSENIASE'] = df.apply(
+                lambda r: (r.casos_novos_hanseniase / r.populacao * 100000) if r.populacao > 0 else 0,
+                axis=1
+            )
+            df['UF'] = uf
+            if 'ano' in df.columns:
+                df.rename(columns={'ano': 'ANO'}, inplace=True)
+            else:
+                 df['ANO'] = ano
+
+            resultados.append(df.reset_index())
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Taxa de Detecção de Hanseníase processada com sucesso.")
+        return df_final
+    else:
+        print("\n⚠️ Nenhum dado de Hanseníase foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Detecção de Hanseníase para múltiplos estados e anos.")
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2021 2022)")
+    parser.add_argument("--pop", type=str, default="outputs/csv/populacao_estimada_completa_spline.csv", help="Caminho para o arquivo CSV com dados populacionais.")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho para a raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"taxa_hanseniase_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV com os resultados salvo em: '{caminho_saida_csv}'")
+    else:
+        print("\n⚠️ Nenhum resultado final foi gerado para salvar.")
+
+
+
+================================================================================
+ARQUIVO: hantavirose.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/hantavirose.py
+# Indicador: Hantavirose (SINAN/HANT)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "HANT"
+NOME_INDICADOR = "TAXA_INCIDENCIA_HANTAVIROSE"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Hantavirose (por 100.000 hab.) a partir do SINAN/HANT."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Hantavirose (SINAN/HANT).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"hantavirose_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: hepatites_virais.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/hepatites_virais.py
+# Indicador: Hepatites Virais (SINAN/HEPA)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "HEPA"
+NOME_INDICADOR = "TAXA_INCIDENCIA_HEPATITES"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Hepatites Virais (por 100.000 hab.) a partir do SINAN/HEPA."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Hepatites Virais (SINAN/HEPA).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"hepatites_virais_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: incidencia_arboviroses.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/incidencia_arboviroses.py
+
+import pandas as pd
+import argparse
+from pathlib import Path
+from typing import List, Union
+
+from pysus.online_data.SINAN import SINAN
+from ..utils.dataloaders import filtrar_populacao
+
+# --- DICIONÁRIO DE ARBOVIROSES E SEUS CÓDIGOS NO SINAN ---
+ARBOVIROSES_SINAN = {
+    "dengue": "DENG",
+    "chikungunya": "CHIK",
+    "zika": "ZIKA"
+}
+
+# Códigos de classificação final (CLASSI_FIN) que indicam um caso confirmado
+CODIGOS_CONFIRMADOS = {
+    "DENG": ['10', '11', '12'],          # Dengue, Dengue com sinais de alarme, Dengue grave
+    "CHIK": ['2', '3', '10', '11', '12'], # Laboratorial, Clínico-Epidemiológico, Chikungunya (variantes)
+    "ZIKA": ['1']                        # Zika confirmado
+}
+
+def processar_dados(ufs, anos, arquivo_populacao, doencas, **kwargs):
+    """
+    Calcula a taxa de incidência para uma ou mais arboviroses (Dengue, Zika, Chikungunya),
+    gerando colunas separadas para cada uma. Versão com guardas defensivas contra
+    downloads vazios/ausentes (sincronizada com api/pipeline_indicadores).
+    """
+    resultados_finais_por_ano = []
+
+    doencas_lista = [doencas] if isinstance(doencas, str) else doencas
+
+    for doenca in doencas_lista:
+        if doenca not in ARBOVIROSES_SINAN:
+            print(f"❌ Erro: Doença '{doenca}' não reconhecida. Opções válidas: {list(ARBOVIROSES_SINAN.keys())}")
+            return pd.DataFrame()
+
+    try:
+        sinan_db = SINAN().load()
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do SINAN: {e}")
+        return pd.DataFrame()
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Arboviroses em {uf}/{ano} ===")
+
+            df_ano_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_ano_base is None or df_ano_base.empty:
+                print(f"⚠️ Aviso: Dados de população não encontrados ou vazios para {uf}/{ano}. Pulando este ano/UF.")
+                continue
+
+            for doenca in doencas_lista:
+                print(f"  -> Calculando para: '{doenca.title()}'")
+                dis_code = ARBOVIROSES_SINAN[doenca]
+
+                try:
+                    files = sinan_db.get_files(dis_code=dis_code, year=ano)
+                    if not files:
+                        print(f"⚠️ Aviso: Nenhum arquivo SINAN/{dis_code} encontrado para o ano {ano}. Casos serão zero.")
+                        casos_agregados = pd.Series(dtype=int, name=f"casos_{doenca}")
+
+                    else:
+                        downloaded_data = sinan_db.download(files)
+
+                        df_sinan = pd.DataFrame()
+                        if isinstance(downloaded_data, list):
+                            df_sinan = pd.concat([p.to_dataframe() for p in downloaded_data], ignore_index=True)
+                        elif hasattr(downloaded_data, "to_dataframe"):
+                            df_sinan = downloaded_data.to_dataframe()
+
+                        if df_sinan.empty:
+                            print(f"⚠️ Aviso: DataFrame do SINAN/{dis_code} está vazio após download. Casos serão zero.")
+                            casos_agregados = pd.Series(dtype=int, name=f"casos_{doenca}")
+
+                        else:
+                            codigos_confirmacao_num = [int(c) for c in CODIGOS_CONFIRMADOS.get(dis_code, [])]
+
+                            df_sinan['CLASSI_FIN_NUM'] = pd.to_numeric(df_sinan['CLASSI_FIN'], errors='coerce').fillna(0).astype(int)
+
+                            df_confirmados = df_sinan[df_sinan['CLASSI_FIN_NUM'].isin(codigos_confirmacao_num)]
+
+                            print(f"    -> {len(df_confirmados)} casos confirmados encontrados para {doenca.title()}.")
+
+                            df_confirmados = df_confirmados.copy()
+                            df_confirmados['ID_MN_RESI_6'] = df_confirmados['ID_MN_RESI'].astype(str).str[:6]
+                            casos_agregados = df_confirmados.groupby('ID_MN_RESI_6').size().rename(f"casos_{doenca}")
+                            casos_agregados.index.name = 'cod_mun_ibge_6'
+
+                except Exception as e:
+                    print(f"❌ ERRO GRAVE ao processar {doenca} para {uf}/{ano}: {e}")
+                    casos_agregados = pd.Series(dtype=int, name=f"casos_{doenca}")
+
+                # Garante que o índice de df_ano_base é 'cod_mun_ibge_6' antes do join
+                if df_ano_base.index.name != 'cod_mun_ibge_6':
+                    df_ano_base = df_ano_base.reset_index().set_index('cod_mun_ibge_6')
+
+                df_ano_base = df_ano_base.join(casos_agregados, how="left")
+                df_ano_base[f"casos_{doenca}"] = df_ano_base[f"casos_{doenca}"].fillna(0).astype(int)
+
+                nome_coluna_taxa = f"TAXA_INCID_{doenca.upper()}"
+                df_ano_base[nome_coluna_taxa] = df_ano_base.apply(
+                    lambda r: (r[f"casos_{doenca}"] / r.populacao * 100000) if r.populacao > 0 else 0, axis=1)
+
+            df_ano_base['UF'] = uf
+            resultados_finais_por_ano.append(df_ano_base.reset_index())
+
+    if resultados_finais_por_ano:
+        df_final = pd.concat(resultados_finais_por_ano, ignore_index=True)
+        print("\n✅ Processamento de arboviroses concluído com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado de arboviroses foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Incidência para uma ou mais arboviroses.")
+
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+
+    parser.add_argument("--doenca", nargs="+", default=list(ARBOVIROSES_SINAN.keys()), choices=list(ARBOVIROSES_SINAN.keys()),
+                        help="Uma ou mais arboviroses a serem processadas. Padrão: todas.")
+
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        doencas=args.doenca,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            doenca_str = "-".join(sorted(args.doenca))
+            nome_arquivo = f"incidencia_{doenca_str}_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = output_dir / nome_arquivo
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: indicadores_tuberculose.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/indicadores_tuberculose.py
+
+import pandas as pd
+import argparse
+from pathlib import Path
+from typing import List
+
+# Importa as funções de download e utilitários
+from pysus.online_data.SINAN import SINAN
+from ..utils.dataloaders import filtrar_populacao
+
+# --- CÓDIGOS DE CLASSIFICAÇÃO PARA TUBERCULOSE NO SINAN ---
+# TP_NOT (Tipo de Notificação/Entrada): Define se é um caso novo
+# 1: Caso Novo, 2: Recidiva, 3: Reingresso após abandono
+CODIGOS_CASO_NOVO = ['1', '2', '3']
+
+# SITUA_ENCE (Situação de Encerramento): Define o desfecho do caso
+# 1: Cura, 2: Abandono, 3: Óbito por TB, 4: Óbito por outra causa, 5: Transferência, 7: Mudança de esquema
+CODIGO_CURA = '1'
+CODIGO_ABANDONO = '2'
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula os principais indicadores de Tuberculose (Incidência, Abandono e Cura).
+    """
+    resultados_finais_por_ano = []
+
+    try:
+        sinan_db = SINAN().load()
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do SINAN: {e}")
+        return pd.DataFrame()
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Indicadores de Tuberculose em {uf}/{ano} ===")
+
+            df_ano_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_ano_base is None:
+                continue
+
+            try:
+                files = sinan_db.get_files(dis_code='TUBE', year=ano)
+                if not files:
+                    raise FileNotFoundError(f"Nenhum arquivo SINAN/TUBE encontrado para o ano {ano}")
+
+                downloaded_data = sinan_db.download(files)
+
+                df_sinan = pd.DataFrame()
+                if isinstance(downloaded_data, list):
+                    df_sinan = pd.concat([p.to_dataframe() for p in downloaded_data], ignore_index=True)
+                elif hasattr(downloaded_data, "to_dataframe"):
+                    df_sinan = downloaded_data.to_dataframe()
+
+                if df_sinan.empty:
+                    raise ValueError("DataFrame do SINAN/TUBE está vazio.")
+
+                # --- LÓGICA DE CÁLCULO DOS INDICADORES (CORRIGIDA) ---
+
+                # Converte colunas de código para numérico para uma filtragem robusta
+                df_sinan['TP_NOT_NUM'] = pd.to_numeric(df_sinan['TP_NOT'], errors='coerce').fillna(0).astype(int)
+                df_sinan['SITUA_ENCE_NUM'] = pd.to_numeric(df_sinan['SITUA_ENCE'], errors='coerce').fillna(0).astype(int)
+
+                CODIGOS_CASO_NOVO_NUM = [int(c) for c in CODIGOS_CASO_NOVO]
+                CODIGO_CURA_NUM = int(CODIGO_CURA)
+                CODIGO_ABANDONO_NUM = int(CODIGO_ABANDONO)
+
+                # 1. Filtra por casos novos e pela UF de RESIDÊNCIA
+                df_casos_novos = df_sinan[df_sinan['TP_NOT_NUM'].isin(CODIGOS_CASO_NOVO_NUM)]
+                uf_code_str = df_ano_base.index.str[:2].unique()[0]
+                df_casos_novos_uf = df_casos_novos[df_casos_novos['ID_MN_RESI'].astype(str).str.startswith(uf_code_str)].copy()
+
+                # 2. Agrega o total de casos novos por município de RESIDÊNCIA
+                casos_novos_agg = df_casos_novos_uf.groupby('ID_MN_RESI').size().rename("casos_novos_tb")
+                casos_novos_agg.index = casos_novos_agg.index.astype(str).str[:6]
+                print(f"    -> {casos_novos_agg.sum()} casos novos de Tuberculose encontrados.")
+
+                # 3. Agrega casos de abandono e cura a partir dos casos novos
+                casos_abandono_agg = df_casos_novos_uf[df_casos_novos_uf['SITUA_ENCE_NUM'] == CODIGO_ABANDONO_NUM].groupby('ID_MN_RESI').size().rename("casos_abandono_tb")
+                casos_abandono_agg.index = casos_abandono_agg.index.astype(str).str[:6]
+
+                casos_cura_agg = df_casos_novos_uf[df_casos_novos_uf['SITUA_ENCE_NUM'] == CODIGO_CURA_NUM].groupby('ID_MN_RESI').size().rename("casos_cura_tb")
+                casos_cura_agg.index = casos_cura_agg.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao processar Tuberculose para {uf}/{ano}: {e}")
+                casos_novos_agg = pd.Series(dtype=int, name="casos_novos_tb")
+                casos_abandono_agg = pd.Series(dtype=int, name="casos_abandono_tb")
+                casos_cura_agg = pd.Series(dtype=int, name="casos_cura_tb")
+
+            # --- JUNÇÃO E CÁLCULO FINAL ---
+            df = df_ano_base.join(casos_novos_agg, how="left")
+            df = df.join(casos_abandono_agg, how="left")
+            df = df.join(casos_cura_agg, how="left")
+
+            cols_to_fill = ["casos_novos_tb", "casos_abandono_tb", "casos_cura_tb"]
+            df[cols_to_fill] = df[cols_to_fill].fillna(0).astype(int)
+
+            # Calcula as taxas
+            df['TAXA_INCIDENCIA_TB'] = df.apply(lambda r: (r.casos_novos_tb / r.populacao * 100000) if r.populacao > 0 else 0, axis=1)
+            df['TAXA_ABANDONO_TB'] = df.apply(lambda r: (r.casos_abandono_tb / r.casos_novos_tb * 100) if r.casos_novos_tb > 0 else 0, axis=1)
+            df['TAXA_CURA_TB'] = df.apply(lambda r: (r.casos_cura_tb / r.casos_novos_tb * 100) if r.casos_novos_tb > 0 else 0, axis=1)
+
+            df['UF'] = uf
+            resultados_finais_por_ano.append(df.reset_index())
+
+
+    if resultados_finais_por_ano:
+        df_final = pd.concat(resultados_finais_por_ano, ignore_index=True)
+        print("\n✅ Indicadores de Tuberculose processados com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado de Tuberculose foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula os principais indicadores de Tuberculose (Incidência, Abandono, Cura).")
+
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"indicadores_tuberculose_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = output_dir / nome_arquivo
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: internacoes_gerais.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SIH import SIH
+from ..utils.dataloaders import filtrar_populacao
+
+def processar_dados(ufs, anos, arquivo_populacao, meses, **kwargs):
+    """
+    Calcula a Taxa de Internações Gerais por 1.000 habitantes para múltiplas UFs,
+    anos e meses (opcional).
+    """
+    df_resultados = [] # A variável foi declarada como 'df_resultados'
+
+    try:
+        sih_db = SIH()
+        sih_db.load()
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do SIH: {e}")
+        return pd.DataFrame()
+
+    processar_por_mes = bool(meses) and len(meses) > 0
+
+    for uf in ufs:
+        for ano in anos:
+            meses_iterar = meses if processar_por_mes else [None]
+
+            for mes in meses_iterar:
+                periodo_str = f"{uf}/{ano}" + (f"/{mes:02d}" if mes else " (ano inteiro)")
+                print(f"\n=== Processando Internações Gerais: {periodo_str} ===")
+
+                df_base = filtrar_populacao(
+                    arquivo_populacao=arquivo_populacao,
+                    uf=uf,
+                    ano=ano
+                )
+                if df_base is None:
+                    continue
+
+                try:
+                    files = sih_db.get_files(group='RD', uf=uf, year=ano, month=mes)
+
+                    if not files:
+                        print(f"⚠️  Nenhum arquivo SIH encontrado para {periodo_str}")
+                        df_sih = pd.DataFrame()
+                    else:
+                        parquet_set = sih_db.download(files)
+                        if isinstance(parquet_set, list):
+                            df_sih = pd.concat([p.to_dataframe() for p in parquet_set], ignore_index=True)
+                        elif hasattr(parquet_set, "to_dataframe"):
+                            df_sih = parquet_set.to_dataframe()
+                        else:
+                            df_sih = pd.DataFrame()
+
+                except Exception as e:
+                    print(f"❌ Erro ao carregar dados do SIH para {periodo_str}: {e}")
+                    df_sih = pd.DataFrame()
+
+                if df_sih.empty or 'MUNIC_RES' not in df_sih.columns:
+                    internacoes = pd.Series(dtype=int, name="total_internacoes")
+                else:
+                    df_sih['MUNIC_RES'] = df_sih['MUNIC_RES'].astype(str).str.zfill(6)
+                    internacoes = df_sih.groupby("MUNIC_RES").size().rename("total_internacoes")
+
+                df = df_base.join(internacoes, how="left")
+                df["total_internacoes"] = df["total_internacoes"].fillna(0).astype(int)
+
+                df["TAXA_INTERNACAO_GERAL"] = df.apply(
+                    lambda row: (row["total_internacoes"] / row["populacao"]) * 1000 if row["populacao"] > 0 else 0,
+                    axis=1
+                )
+
+                df["UF"] = uf
+                df["MES"] = mes if mes is not None else 0
+
+                # ✅ --- CORREÇÃO APLICADA AQUI ---
+                # O nome da variável foi corrigido de 'resultados' para 'df_resultados'.
+                df_resultados.append(df.reset_index())
+                # --- FIM DA CORREÇÃO ---
+
+    if df_resultados:
+        df_final = pd.concat(df_resultados, ignore_index=True)
+        print("\n✅ Taxa de Internações Gerais processada com sucesso.")
+        return df_final
+    else:
+        print("\n⚠️ Nenhum dado de internações foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula a taxa de internações gerais por 1.000 habitantes.")
+
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2024], help="Lista de anos (ex: 2023 2024)")
+    parser.add_argument("--meses", nargs="*", type=int, default=None, help="Lista de meses (ex: 1 2 12). Se não informado, processa o ano inteiro.")
+    parser.add_argument("--pop", type=str, default="outputs/csv/populacao_estimada_completa_spline.csv", help="Arquivo CSV com dados populacionais")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        meses=args.meses,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            dir_atual = os.path.dirname(__file__)
+
+            # ✅ CORREÇÃO: Sobe DOIS NÍVEIS para chegar à raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            meses_str = '-'.join(map(str, args.meses)) if args.meses else "anual"
+            nome_arquivo = f"taxa_internacoes_gerais_{ufs_str}_{anos_str}_{meses_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 Resultado salvo em: '{caminho_saida_csv}'")
+    else:
+        print("\n⚠️ Nenhum resultado foi gerado para salvar.")
+
+
+
+================================================================================
+ARQUIVO: intoxicacao_exogena.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/intoxicacao_exogena.py
+# Indicador: Intoxicação Exógena (SINAN/IEXO)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "IEXO"
+NOME_INDICADOR = "TAXA_INTOX_EXOGENA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Intoxicação Exógena (por 100.000 hab.) a partir do SINAN/IEXO."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Intoxicação Exógena (SINAN/IEXO).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"intoxicacao_exogena_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: leishmaniose_tegumentar.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/leishmaniose_tegumentar.py
+# Indicador: Leishmaniose Tegumentar Americana (SINAN/LTAN)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "LTAN"
+NOME_INDICADOR = "TAXA_INCIDENCIA_LTAN"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Leishmaniose Tegumentar Americana (por 100.000 hab.) a partir do SINAN/LTAN."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Leishmaniose Tegumentar Americana (SINAN/LTAN).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"leishmaniose_tegumentar_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: leishmaniose_visceral.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/leishmaniose_visceral.py
+# Indicador: Leishmaniose Visceral (SINAN/LEIV)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "LEIV"
+NOME_INDICADOR = "TAXA_INCIDENCIA_LEIV"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Leishmaniose Visceral (por 100.000 hab.) a partir do SINAN/LEIV."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Leishmaniose Visceral (SINAN/LEIV).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"leishmaniose_visceral_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: leptospirose.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/leptospirose.py
+# Indicador: Leptospirose (SINAN/LEPT)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "LEPT"
+NOME_INDICADOR = "TAXA_INCIDENCIA_LEPTO"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Leptospirose (por 100.000 hab.) a partir do SINAN/LEPT."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2', '3', '4'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Leptospirose (SINAN/LEPT).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"leptospirose_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: ler_dort.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/ler_dort.py
+# Indicador: LER/DORT Relacionado ao Trabalho (SINAN/LERD)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "LERD"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_LERDORT"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de notificação de LER/DORT (por 100.000 hab.) a partir do SINAN/LERD."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a LER/DORT Relacionado ao Trabalho (SINAN/LERD).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: maes_adolescentes.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SINASC import download as download_sinasc
+from ..utils.dataloaders import filtrar_populacao
+
+# --- ALTERAÇÃO: Adicionado 'dir_mapas' para flexibilidade ---
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+
+    """
+    Calcula a proporção de mães adolescentes (<20 anos) por município,
+    UF e ano, com geração de mapas automáticos.
+    """
+    resultados = []
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Mães Adolescentes: {uf} / {ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            # ✅ CORREÇÃO: Lógica de download mais robusta
+            try:
+                sinasc = download_sinasc(states=uf, years=ano, groups=["DN"])
+                if isinstance(sinasc, list) and len(sinasc) > 0:
+                    df_sin = pd.concat([f.to_dataframe() for f in sinasc], ignore_index=True)
+                elif hasattr(sinasc, "to_dataframe"):
+                    df_sin = sinasc.to_dataframe()
+                else: # Caso de não encontrar arquivos
+                    raise ValueError("Nenhum arquivo SINASC encontrado.")
+
+                if df_sin.empty:
+                    raise ValueError("DataFrame do SINASC está vazio após o download.")
+
+                # total de nascimentos
+                tot = df_sin.groupby("CODMUNRES").size().rename("total_nascimentos")
+                tot.index = tot.index.astype(str).str[:6]
+
+                # mães com idade < 20 (IDADEMAE não numérica/ausente é descartada, não derruba o UF/ano)
+                idademae_num = pd.to_numeric(df_sin["IDADEMAE"].astype(str).str[:2], errors="coerce")
+                mae_adol = df_sin[idademae_num < 20].groupby("CODMUNRES").size().rename("maes_adolescentes")
+                mae_adol.index = mae_adol.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar SINASC para {uf}/{ano}: {e}")
+                # Cria Series vazias com os nomes corretos para evitar erro no join
+                tot = pd.Series(dtype=int, name="total_nascimentos")
+                mae_adol = pd.Series(dtype=int, name="maes_adolescentes")
+
+            # junta e calcula
+            df = df_base.join(tot, how="left").join(mae_adol, how="left").fillna(0)
+            df['total_nascimentos'] = df['total_nascimentos'].astype(int)
+            df['maes_adolescentes'] = df['maes_adolescentes'].astype(int)
+            df['PROP_MAE_ADOL'] = df.apply(
+                lambda r: (r.maes_adolescentes / r.total_nascimentos * 100) if r.total_nascimentos > 0 else 0,
+                axis=1
+            )
+
+            df['UF'] = uf
+
+            resultados.append(df.reset_index())
+
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Proporção de mães adolescentes (%) processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula a proporção de mães adolescentes (<20 anos) por UF e ano.")
+
+    # ✅ CORREÇÃO: Parser aprimorado
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO GO MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022, 2023], help="Lista de anos")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com população municipal")
+
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída. Se não informado, um nome será gerado.")
+
+    args = parser.parse_args()
+
+    df_prop = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_prop.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            dir_atual = os.path.dirname(__file__)
+
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"prop_maes_adolescentes_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_prop.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: malaria.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/malaria.py
+# Indicador: Malária (SINAN/MALA)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "MALA"
+NOME_INDICADOR = "TAXA_INCIDENCIA_MALARIA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Malária (por 100.000 hab.) a partir do SINAN/MALA."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Malária (SINAN/MALA).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"malaria_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: medicos_por_mil.py
+================================================================================
+
+# src/features/medicos_por_mil.py
+
+import pandas as pd
+from pysus.online_data.CNES import CNES
+from ..utils.dataloaders import filtrar_populacao
+import argparse
+from pathlib import Path
+
+def processar_dados(
+    ufs=['TO'],
+    anos=[2022],
+    meses=None,
+    arquivo_populacao="estimativa_pop_spline.csv",
+    **kwargs # Captura argumentos extras como 'doencas', etc., para ignorá-los
+):
+    """
+    Calcula a taxa de médicos por 1.000 habitantes.
+    Se múltiplos meses forem processados, retorna a MÉDIA do período para o ano.
+    """
+    df_resultados_mensais = []
+
+    try:
+        cnes_db = CNES()
+        cnes_db.load(groups=['PF'])
+    except Exception as e:
+        print(f"❌ Erro crítico ao carregar o banco de dados do CNES: {e}")
+        return pd.DataFrame()
+
+    processar_por_mes = bool(meses)
+
+    for uf in ufs:
+        for ano in anos:
+            meses_iterar = meses if processar_por_mes else list(range(1, 13))
+
+            # Carrega a base populacional uma vez por UF/Ano
+            df_base_anual = filtrar_populacao(arquivo_populacao=arquivo_populacao, uf=uf, ano=ano)
+            if df_base_anual is None:
+                print(f"⚠️  Aviso: População para {uf}/{ano} não encontrada. Pulando este ano.")
+                continue
+
+            for mes in meses_iterar:
+                periodo_str = f"{uf}/{ano}/{mes:02d}"
+                print(f"  -> Processando Médicos por Mil: {periodo_str}")
+
+                try:
+                    files = cnes_db.get_files(group='PF', uf=uf, year=ano, month=mes)
+                    if not files:
+                        print(f"⚠️ Nenhum arquivo CNES encontrado para {periodo_str}")
+                        continue
+
+                    df_cnes_mes = cnes_db.download(files).to_dataframe()
+
+                    # ⚠️ CORREÇÃO: 'CPFUNICO' no CNES/PF é um indicador binário (branco/'1'),
+                    # não um identificador por profissional -- nunique() nessa coluna satura
+                    # em no máximo 2 por município, subestimando drasticamente a contagem de
+                    # médicos. O identificador real por profissional é 'CPF_PROF' (mascarado
+                    # por LGPD, mas estável por pessoa).
+                    if 'CBO' not in df_cnes_mes.columns or 'CPF_PROF' not in df_cnes_mes.columns:
+                        print(f"⚠️ Colunas CBO ou CPF_PROF ausentes para {periodo_str}")
+                        contagem = pd.Series(dtype=int, name='n_medicos')
+                    else:
+                        df_med = df_cnes_mes[df_cnes_mes['CBO'].astype(str).str.startswith('225')]
+                        contagem = df_med.groupby('CODUFMUN')['CPF_PROF'].nunique().rename('n_medicos')
+                        contagem.index = contagem.index.astype(str)
+
+                except Exception as e:
+                    print(f"❌ Erro ao carregar dados do CNES para {periodo_str}: {e}")
+                    contagem = pd.Series(dtype=int, name='n_medicos')
+
+                # Junta os dados mensais e calcula a taxa mensal
+                df_mes_calculado = df_base_anual.join(contagem, how='left').fillna({'n_medicos': 0})
+                df_mes_calculado['n_medicos'] = df_mes_calculado['n_medicos'].astype(int)
+                df_mes_calculado['TAXA_MEDICOS'] = df_mes_calculado.apply(
+                    lambda r: (r['n_medicos'] / r['populacao']) * 1000 if r['populacao'] > 0 else 0,
+                    axis=1
+                )
+                df_mes_calculado['MES'] = mes
+                df_resultados_mensais.append(df_mes_calculado.reset_index())
+
+    if not df_resultados_mensais:
+        print("\n⚠️ Nenhum dado mensal de médicos foi processado.")
+        return pd.DataFrame()
+
+    # --- AGREGAÇÃO ANUAL ---
+    df_mensal_completo = pd.concat(df_resultados_mensais, ignore_index=True)
+
+    # Chaves para agrupar. Inclui informações do município para mantê-las no resultado.
+    chaves_agregacao = ['cod_mun_ibge_6', 'ANO', 'UF', 'municipio', 'cod_mun_ibge_7', 'populacao']
+    chaves_presentes = [chave for chave in chaves_agregacao if chave in df_mensal_completo.columns]
+
+    # Agrupa por município/ano e calcula a média das taxas e contagens
+    df_anual = df_mensal_completo.groupby(chaves_presentes).agg(
+        TAXA_MEDICOS=('TAXA_MEDICOS', 'mean'),
+        n_medicos=('n_medicos', 'mean') # Representa a média de médicos ao longo dos meses analisados
+    ).reset_index()
+
+    print("✅ Taxa de Médicos (média anual) processada com sucesso.")
+    return df_anual
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Calcula a taxa de médicos por mil habitantes.")
+
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2023 2024)")
+    parser.add_argument("--meses", nargs="*", type=int, default=None, help="Meses para processar. Se não informado, usa o ano inteiro.")
+    parser.add_argument("--pop", type=str, default=str(BASE_DIR / "referencia/populacao/populacao_estimada_completa_spline.csv"), help="Arquivo CSV com dados populacionais")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída (anualizado).")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        meses=args.meses,
+        arquivo_populacao=args.pop
+    )
+
+    if not df_resultado.empty:
+        caminho_saida = Path(args.saida) if args.saida else BASE_DIR / "outputs" / "indicadores_teste" / "medicos_por_mil_anual.csv"
+        caminho_saida.parent.mkdir(parents=True, exist_ok=True)
+        df_resultado.to_csv(caminho_saida, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 Resultado anualizado salvo em: '{caminho_saida}'")
+    else:
+        print("\n⚠️ Nenhum resultado final foi gerado para salvar.")
+
+
+================================================================================
+ARQUIVO: meningite.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/meningite.py
+# Indicador: Meningite (SINAN/MENI)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "MENI"
+NOME_INDICADOR = "TAXA_INCIDENCIA_MENI"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Meningite (por 100.000 hab.) a partir do SINAN/MENI."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Meningite (SINAN/MENI).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"meningite_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: mortalidade_causas_especificas.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/mortalidade_causas_especificas.py
+
+import pandas as pd
+import argparse
+from pathlib import Path
+from typing import List, Union
+
+# Importa as funções de download e utilitários
+from pysus.online_data.SIM import download as download_sim
+from ..utils.dataloaders import filtrar_populacao
+
+# --- DICIONÁRIO DE GRUPOS DE CAUSAS ESPECÍFICAS (CID-10) ---
+GRUPOS_CID10 = {
+    "circulatorio": ['I'],
+    "neoplasias": ['C'],
+    "respiratorias": ['J'],
+    "diabetes": ['E10', 'E11', 'E12', 'E13', 'E14'],
+    "externas": ['V', 'W', 'X', 'Y'],
+    "covid19": ['U071', 'U072', 'B342']
+}
+
+def processar_dados(ufs, anos, arquivo_populacao, causa_grupo, **kwargs):
+    """
+    Calcula a taxa de mortalidade para um ou mais grupos de causas específicas.
+    """
+    resultados_finais = []
+    causa_grupo_lista = [causa_grupo] if isinstance(causa_grupo, str) else causa_grupo
+
+    for grupo in causa_grupo_lista:
+        if grupo not in GRUPOS_CID10:
+            print(f"❌ Erro: Grupo de causa '{grupo}' não reconhecido.")
+            return pd.DataFrame()
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando UF: {uf} / Ano: {ano} ===")
+
+            df_ano_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao, uf=uf, ano=ano
+            )
+            if df_ano_base is None:
+                continue
+
+            try:
+                print("[LOG] Baixando dados do SIM...")
+                sim_raw = download_sim(states=uf, years=ano, groups=["CID10"])
+                # download_sim pode retornar um único ParquetSet, uma lista deles ou uma
+                # lista vazia quando a competência ainda não foi publicada pelo DATASUS.
+                if isinstance(sim_raw, list):
+                    if not sim_raw:
+                        raise FileNotFoundError(f"Nenhum arquivo SIM disponível para {ano} (dado ainda não publicado).")
+                    df_sim = pd.concat([p.to_dataframe() for p in sim_raw], ignore_index=True)
+                else:
+                    df_sim = sim_raw.to_dataframe()
+                print("[LOG] Dados do SIM baixados com sucesso.")
+            except Exception as e:
+                # Mantém o UF/ano no resultado final (com contagens zeradas) em vez de
+                # descartá-lo silenciosamente — falha de download não deve virar "0
+                # municípios processados", e sim "0 óbitos processados".
+                print(f"⚠️ Erro ao baixar ou processar SIM para {uf}/{ano}: {e}.")
+                df_sim = pd.DataFrame(columns=["CAUSABAS", "CODMUNRES"])
+
+            # --- CORREÇÃO NA LÓGICA DE AGREGAÇÃO ---
+            # Inicia o DataFrame com os dados base de população
+            df_ano_com_causas = df_ano_base.copy()
+
+            # Itera sobre cada grupo de causa e adiciona as colunas ao mesmo DataFrame
+            for grupo in causa_grupo_lista:
+                print(f"  -> Calculando para o grupo: '{grupo.title()}'")
+                codigos_cid = GRUPOS_CID10[grupo]
+
+                # Normaliza a coluna CAUSABAS para uma comparação robusta
+                df_sim['CAUSABAS_NORM'] = df_sim['CAUSABAS'].str.replace('.', '', regex=False).str.strip()
+
+                if grupo == 'covid19':
+                    df_causa_especifica = df_sim[df_sim['CAUSABAS_NORM'].isin(codigos_cid)].copy()
+                else:
+                    prefixos = tuple(codigos_cid)
+                    df_causa_especifica = df_sim[df_sim['CAUSABAS_NORM'].str.startswith(prefixos, na=False)].copy()
+
+                print(f"[DEBUG] Grupo '{grupo}': {len(df_causa_especifica)} óbitos encontrados.")
+
+                nome_coluna_obitos = f"obitos_{grupo}"
+                obitos_especificos = df_causa_especifica.groupby("CODMUNRES").size().rename(nome_coluna_obitos)
+                obitos_especificos.index = obitos_especificos.index.astype(str).str[:6]
+
+                df_ano_com_causas = df_ano_com_causas.join(obitos_especificos, how="left")
+                df_ano_com_causas[nome_coluna_obitos] = df_ano_com_causas[nome_coluna_obitos].fillna(0).astype(int)
+
+                nome_coluna_taxa = f"TAXA_MORT_{grupo.upper()}"
+                df_ano_com_causas[nome_coluna_taxa] = df_ano_com_causas.apply(
+                    lambda r: (r[nome_coluna_obitos] / r.populacao * 100000) if r.populacao > 0 else 0, axis=1)
+
+
+            df_ano_com_causas['UF'] = uf
+            resultados_finais.append(df_ano_com_causas.reset_index())
+
+    if resultados_finais:
+        df_final = pd.concat(resultados_finais, ignore_index=True)
+        print("\n✅ Processamento de todas as causas e anos concluído com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Mortalidade por Causas Específicas.")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    parser.add_argument("--causa", nargs="+", default=list(GRUPOS_CID10.keys()), choices=list(GRUPOS_CID10.keys()),
+                        help="Um ou mais grupos de causa específica a serem processados. Padrão: todos os grupos.")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    caminho_mapas_padrao = RAIZ_PROJETO / "outputs" / "figures"
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        causa_grupo=args.causa,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            causa_str = "-".join(sorted(args.causa))
+            nome_arquivo = f"mortalidade_{causa_str}_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = output_dir / nome_arquivo
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: mortalidade_infantil.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+from pysus.online_data.SIM import download as download_sim
+from pysus.online_data.SINASC import download as download_sinasc
+from ..utils.dataloaders import filtrar_populacao
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a Taxa de Mortalidade Infantil (TMI) para múltiplos estados e anos,
+    gerando também mapas por UF/ano.
+    """
+    resultados = []
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando TMI: {uf} / {ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            # --- SIM: óbitos infantis ---
+            try:
+                sim_files = download_sim(states=uf, years=ano, groups=["CID10"])
+                # download_sim pode retornar um único ParquetSet, uma lista deles ou uma
+                # lista vazia quando a competência ainda não foi publicada pelo DATASUS.
+                if isinstance(sim_files, list):
+                    if not sim_files:
+                        raise FileNotFoundError(f"Nenhum arquivo SIM disponível para {ano} (dado ainda não publicado).")
+                    df_sim = pd.concat([p.to_dataframe() for p in sim_files], ignore_index=True)
+                else:
+                    df_sim = sim_files.to_dataframe()
+                df_sim["IDADE"] = pd.to_numeric(df_sim["IDADE"], errors="coerce")
+                df_inf = df_sim[df_sim["IDADE"] < 401]
+                obitos = df_inf.groupby("CODMUNRES").size().rename("obitos_infantis")
+                obitos.index = obitos.index.astype(str).str[:6]
+            except Exception as e:
+                print(f"⚠️ Erro SIM {uf}/{ano}: {e}")
+                # ✅ CORREÇÃO: Garante que a Série vazia tenha um nome
+                obitos = pd.Series(dtype=int, name="obitos_infantis")
+
+            # --- SINASC: nascidos vivos ---
+            try:
+                sinasc_files = download_sinasc(states=uf, years=ano, groups=["DN"])
+                if isinstance(sinasc_files, list) and len(sinasc_files) > 0:
+                    df_sin = pd.concat([f.to_dataframe() for f in sinasc_files], ignore_index=True)
+                elif hasattr(sinasc_files, "to_dataframe"):
+                    df_sin = sinasc_files.to_dataframe()
+                else: # Caso de não encontrar arquivos
+                    raise ValueError("Nenhum arquivo SINASC encontrado.")
+
+                nascidos = df_sin.groupby("CODMUNRES").size().rename("nascidos_vivos")
+                nascidos.index = nascidos.index.astype(str).str[:6]
+            except Exception as e:
+                print(f"⚠️ Erro SINASC {uf}/{ano}: {e}")
+                # ✅ CORREÇÃO: Garante que a Série vazia tenha um nome
+                nascidos = pd.Series(dtype=int, name="nascidos_vivos")
+
+            # junta e calcula TMI
+            df_base = df_base.join(obitos, how="left").join(nascidos, how="left").fillna(0)
+            df_base['obitos_infantis'] = df_base['obitos_infantis'].astype(int)
+            df_base['nascidos_vivos']  = df_base['nascidos_vivos'].astype(int)
+            df_base['TMI'] = df_base.apply(
+                lambda r: (r['obitos_infantis']/r['nascidos_vivos']*1000) if r['nascidos_vivos']>0 else 0,
+                axis=1
+            )
+
+            df_base['UF']  = uf
+
+            resultados.append(df_base.reset_index())
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ TMI (por mil nascidos vivos) processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Mortalidade Infantil (TMI) por UF e ano.")
+    parser.add_argument("--ufs", nargs="+", default=["TO", "GO"], help="Lista de UFs, ex: TO GO MG")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022, 2023], help="Lista de anos (ex: 2022 2023)")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_tmi = processar_dados(args.ufs, args.anos, args.pop)
+
+    if not df_tmi.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho para a raiz do projeto
+            dir_atual = os.path.dirname(__file__)
+
+            # ✅ CORREÇÃO: Sobe DOIS NÍVEIS para chegar à raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"mortalidade_infantil_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_tmi.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: mortalidade_prematura_dcnt.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/mortalidade_prematura_dcnt.py
+
+import pandas as pd
+import os
+import argparse
+from pathlib import Path
+
+# Importa as funções de download e utilitários
+from pysus.online_data.SIM import download as download_sim
+from ..utils.dataloaders import filtrar_populacao
+
+# --- LISTA DE CIDs PARA DOENÇAS CRÔNICAS NÃO TRANSMISSÍVEIS (DCNT) ---
+# Baseado nas definições da OMS para monitoramento de mortalidade prematura.
+DCNT_CID10 = [
+    # Neoplasias Malignas (Câncer)
+    'C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+    'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+    'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C30', 'C31', 'C32',
+    'C33', 'C34', 'C37', 'C38', 'C39', 'C40', 'C41', 'C43', 'C44', 'C45',
+    'C46', 'C47', 'C48', 'C49', 'C50', 'C51', 'C52', 'C53', 'C54', 'C55',
+    'C56', 'C57', 'C58', 'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66',
+    'C67', 'C68', 'C69', 'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76',
+    'C77', 'C78', 'C79', 'C80', 'C81', 'C82', 'C83', 'C84', 'C85', 'C88',
+    'C90', 'C91', 'C92', 'C93', 'C94', 'C95', 'C96', 'C97',
+    # Diabetes Mellitus
+    'E10', 'E11', 'E12', 'E13', 'E14',
+    # Doenças do Aparelho Circulatório
+    'I00', 'I01', 'I02', 'I05', 'I06', 'I07', 'I08', 'I09', 'I10', 'I11',
+    'I12', 'I13', 'I15', 'I20', 'I21', 'I22', 'I23', 'I24', 'I25', 'I26',
+    'I27', 'I28', 'I30', 'I31', 'I32', 'I33', 'I34', 'I35', 'I36', 'I37',
+    'I38', 'I39', 'I40', 'I41', 'I42', 'I43', 'I44', 'I45', 'I46', 'I47',
+    'I48', 'I49', 'I50', 'I51', 'I60', 'I61', 'I62', 'I63', 'I64', 'I65',
+    'I66', 'I67', 'I68', 'I69', 'I70', 'I71', 'I72', 'I73', 'I74', 'I77',
+    'I78', 'I80', 'I81', 'I82', 'I83', 'I84', 'I85', 'I86', 'I87', 'I88',
+    'I89', 'I95', 'I96', 'I97', 'I98', 'I99',
+    # Doenças Respiratórias Crônicas
+    'J30', 'J31', 'J32', 'J33', 'J34', 'J35', 'J36', 'J37', 'J38', 'J39',
+    'J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J47', 'J60', 'J61',
+    'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70', 'J80',
+    'J81', 'J82', 'J84', 'J85', 'J86', 'J90', 'J91', 'J92', 'J93', 'J94',
+    'J95', 'J96', 'J98'
+]
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a taxa de mortalidade prematura (30 a 69 anos) por Doenças Crônicas
+    Não Transmissíveis (DCNT) para múltiplas UFs e anos.
+    """
+    resultados = []
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Mortalidade Prematura por DCNT: {uf}/{ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            try:
+                sim_raw = download_sim(states=uf, years=ano, groups=["CID10"])
+                # download_sim pode retornar um único ParquetSet, uma lista deles ou uma
+                # lista vazia quando a competência ainda não foi publicada pelo DATASUS.
+                if isinstance(sim_raw, list):
+                    if not sim_raw:
+                        raise FileNotFoundError(f"Nenhum arquivo SIM disponível para {ano} (dado ainda não publicado).")
+                    df_sim = pd.concat([p.to_dataframe() for p in sim_raw], ignore_index=True)
+                else:
+                    df_sim = sim_raw.to_dataframe()
+
+                # --- FILTROS ESPECÍFICOS PARA O INDICADOR ---
+
+                # 1. Filtra por faixa etária prematura (30 a 69 anos)
+                # O campo IDADE no SIM é codificado. '4' indica anos.
+                df_sim['IDADE'] = pd.to_numeric(df_sim['IDADE'], errors='coerce')
+                df_prem = df_sim[(df_sim['IDADE'] >= 430) & (df_sim['IDADE'] <= 469)].copy()
+
+                # 2. Filtra pelas causas básicas que são DCNT
+                # Usamos os 3 primeiros caracteres do CID para abranger as subcategorias
+                dcnt_prefixos = list(set([cid[:3] for cid in DCNT_CID10]))
+                df_prem_dcnt = df_prem[df_prem['CAUSABAS'].str[:3].isin(dcnt_prefixos)]
+
+                # 3. Agrega os óbitos por município de residência
+                obitos_dcnt = df_prem_dcnt.groupby("CODMUNRES").size().rename("obitos_prem_dcnt")
+                obitos_dcnt.index = obitos_dcnt.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar SIM para {uf}/{ano}: {e}")
+                obitos_dcnt = pd.Series(dtype=int, name="obitos_prem_dcnt")
+
+            # --- JUNÇÃO E CÁLCULO DO INDICADOR ---
+            df = df_base.join(obitos_dcnt, how="left").fillna(0)
+            df['obitos_prem_dcnt'] = df['obitos_prem_dcnt'].astype(int)
+
+            # Calcula a taxa por 100.000 habitantes
+            df['TAXA_MORT_PREM_DCNT'] = df.apply(
+                lambda r: (r.obitos_prem_dcnt / r.populacao * 100000) if r.populacao > 0 else 0, axis=1)
+
+            df['UF'] = uf
+            resultados.append(df.reset_index())
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Mortalidade Prematura por DCNT processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado de mortalidade prematura por DCNT foi processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Mortalidade Prematura por DCNT.")
+
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            # Lógica para salvar o arquivo na estrutura correta do projeto
+            raiz_projeto = Path(__file__).resolve().parent.parent.parent
+            output_dir = raiz_projeto / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"mortalidade_prematura_dcnt_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = output_dir / nome_arquivo
+
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: pair_trabalho.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/pair_trabalho.py
+# Indicador: Perda Auditiva Induzida por Ruído Relacionada ao Trabalho (SINAN/PAIR)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "PAIR"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_PAIR"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de notificação de PAIR (por 100.000 hab.) a partir do SINAN/PAIR."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Perda Auditiva Induzida por Ruído Relacionada ao Trabalho (SINAN/PAIR).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: paralisia_flacida_aguda.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/paralisia_flacida_aguda.py
+# Indicador: Paralisia Flácida Aguda (SINAN/PFAN)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "PFAN"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_PARALISIA_FLACIDA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de notificação de paralisia flácida aguda (por 100.000 hab.) a partir do SINAN/PFAN."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Paralisia Flácida Aguda (SINAN/PFAN).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: partos_cesareos.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SINASC import download as download_sinasc
+from ..utils.dataloaders import filtrar_populacao
+
+# --- ALTERAÇÃO: Adicionado 'dir_mapas' para flexibilidade ---
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a proporção de partos cesáreos (%) para múltiplas UFs e anos.
+    """
+    resultados = []
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Processando Partos Cesáreos: {uf} / {ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            # ✅ CORREÇÃO: Lógica de download mais robusta
+            try:
+                sinasc = download_sinasc(states=uf, years=ano, groups=["DN"])
+                if isinstance(sinasc, list) and len(sinasc) > 0:
+                    df_sin = pd.concat([f.to_dataframe() for f in sinasc], ignore_index=True)
+                elif hasattr(sinasc, "to_dataframe"):
+                    df_sin = sinasc.to_dataframe()
+                else: # Caso de não encontrar arquivos
+                    raise ValueError("Nenhum arquivo SINASC encontrado.")
+
+                if df_sin.empty:
+                    raise ValueError("DataFrame do SINASC está vazio após o download.")
+
+                # total de nascimentos por município
+                tot = df_sin.groupby("CODMUNRES").size().rename("total_nascimentos")
+                tot.index = tot.index.astype(str).str[:6]
+
+                # partos cesáreos: PARTO == '2'
+                ces = df_sin[df_sin['PARTO'].astype(str) == '2'].groupby("CODMUNRES").size().rename("partos_cesareos")
+                ces.index = ces.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar SINASC para {uf}/{ano}: {e}")
+                # Cria Series vazias com os nomes corretos para evitar erro no join
+                tot = pd.Series(dtype=int, name="total_nascimentos")
+                ces = pd.Series(dtype=int, name="partos_cesareos")
+
+            # junta e calcula proporção
+            df = df_base.join(tot, how="left").join(ces, how="left").fillna(0)
+            df['total_nascimentos'] = df['total_nascimentos'].astype(int)
+            df['partos_cesareos']   = df['partos_cesareos'].astype(int)
+            df['PROP_CESAREOS'] = df.apply(
+                lambda r: (r.partos_cesareos / r.total_nascimentos * 100) if r.total_nascimentos > 0 else 0,
+                axis=1
+            )
+
+            df['UF'] = uf
+
+            resultados.append(df.reset_index())
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Proporção de cesáreos (%) processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula a proporção de partos cesáreos por UF e ano.")
+
+    # ✅ CORREÇÃO: Parser aprimorado
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO GO MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo CSV com população municipal")
+
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída. Se não informado, um nome será gerado.")
+
+    args = parser.parse_args()
+
+    df_prop = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df_prop.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            dir_atual = os.path.dirname(__file__)
+
+            # ✅ CORREÇÃO: Sobe DOIS NÍVEIS para chegar à raiz do projeto
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"prop_cesareos_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df_prop.to_csv(caminho_saida_csv, index=False, sep=';')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+
+================================================================================
+ARQUIVO: peste.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/peste.py
+# Indicador: Peste (SINAN/PEST)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "PEST"
+NOME_INDICADOR = "TAXA_INCIDENCIA_PESTE"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de peste (por 100.000 hab.) a partir do SINAN/PEST."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Peste (SINAN/PEST).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: pneumoconiose_trabalho.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/pneumoconiose_trabalho.py
+# Indicador: Pneumoconiose Relacionada ao Trabalho (SINAN/PNEU)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "PNEU"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_PNEUMOCONIOSE"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de notificação de pneumoconiose relacionada ao trabalho (por 100.000 hab.) a partir do SINAN/PNEU."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Pneumoconiose Relacionada ao Trabalho (SINAN/PNEU).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: pre_natal.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+import pandas as pd
+import os
+import argparse
+from pysus.online_data.SINASC import download as download_sinasc
+from ..utils.dataloaders import filtrar_populacao
+
+# --- ALTERAÇÃO: Adicionado 'dir_mapas' para flexibilidade ---
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """
+    Calcula a cobertura de pré-natal adequado (7+ consultas) para várias UFs e anos.
+    """
+    resultados = []
+
+    for uf in ufs:
+        for ano in anos:
+            print(f"\n=== Cobertura Pré-Natal: {uf}/{ano} ===")
+
+            df_base = filtrar_populacao(
+                arquivo_populacao=arquivo_populacao,
+                uf=uf,
+                ano=ano
+            )
+            if df_base is None:
+                continue
+
+            # ✅ CORREÇÃO: Lógica de download mais robusta
+            try:
+                sin = download_sinasc(states=uf, years=ano, groups=["DN"])
+                if isinstance(sin, list) and len(sin) > 0:
+                    df_sin = pd.concat([f.to_dataframe() for f in sin], ignore_index=True)
+                elif hasattr(sin, "to_dataframe"):
+                    df_sin = sin.to_dataframe()
+                else: # Caso de não encontrar arquivos
+                    raise ValueError("Nenhum arquivo SINASC encontrado.")
+
+                if df_sin.empty:
+                    raise ValueError("DataFrame do SINASC está vazio após o download.")
+
+                # total nascimentos
+                tot = df_sin.groupby("CODMUNRES").size().rename("total_nascimentos")
+                tot.index = tot.index.astype(str).str[:6]
+
+                # pré-natal >= 7 (CONSULTAS=='4')
+                pr7 = df_sin[df_sin['CONSULTAS'].astype(str)=='4'].groupby("CODMUNRES").size().rename("prenatal_7mais")
+                pr7.index = pr7.index.astype(str).str[:6]
+
+            except Exception as e:
+                print(f"⚠️ Erro ao baixar ou processar SINASC para {uf}/{ano}: {e}")
+                # Cria Series vazias com os nomes corretos para evitar erro no join
+                tot = pd.Series(dtype=int, name="total_nascimentos")
+                pr7 = pd.Series(dtype=int, name="prenatal_7mais")
+
+            # junta e calcula
+            df = df_base.join(tot, how="left").join(pr7, how="left").fillna(0)
+            df['total_nascimentos']  = df['total_nascimentos'].astype(int)
+            df['prenatal_7mais']     = df['prenatal_7mais'].astype(int)
+            df['COBERTURA_PRENATAL'] = df.apply(
+                lambda r: (r.prenatal_7mais/r.total_nascimentos*100) if r.total_nascimentos>0 else 0,
+                axis=1
+            )
+
+            df['UF'] = uf
+
+            resultados.append(df.reset_index())
+
+
+    if resultados:
+        df_final = pd.concat(resultados, ignore_index=True)
+        print("\n✅ Cobertura de Pré-Natal Adequado processada com sucesso.")
+        return df_final
+    else:
+        print("⚠️ Nenhum dado processado.")
+        return pd.DataFrame()
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="Calcula cobertura de pré-natal adequado (7+ consultas).")
+
+    # ✅ CORREÇÃO: Parser aprimorado
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO GO MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2024], help="Lista de anos")
+    parser.add_argument("--pop", type=str, default="estimativa_pop_spline.csv", help="Arquivo de população")
+
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída. Se não informado, um nome será gerado.")
+
+    args = parser.parse_args()
+
+    df = processar_dados(
+        ufs=args.ufs,
+        anos=args.anos,
+        arquivo_populacao=args.pop,
+    )
+
+    if not df.empty:
+        caminho_saida_csv = args.saida
+
+        if caminho_saida_csv is None:
+            # Caminho absoluto para a raiz do projeto
+            dir_atual = os.path.dirname(__file__)
+
+            raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+            # Caminho final em dados/processados
+            output_dir = os.path.join(raiz_projeto, "dados", "processados", "indicadores")
+            os.makedirs(output_dir, exist_ok=True)
+
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            nome_arquivo = f"cobertura_prenatal_{ufs_str}_{anos_str}.csv"
+            caminho_saida_csv = os.path.join(output_dir, nome_arquivo)
+
+        df.to_csv(caminho_saida_csv, sep=";", index=False)
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum dado processado.")
+
+
+
+================================================================================
+ARQUIVO: raiva_humana.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/raiva_humana.py
+# Indicador: Raiva Humana (SINAN/RAIV)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "RAIV"
+NOME_INDICADOR = "TAXA_RAIVA_HUMANA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Raiva Humana (por 100.000 hab.) a partir do SINAN/RAIV."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Raiva Humana (SINAN/RAIV).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"raiva_humana_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: sifilis_adquirida.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/sifilis_adquirida.py
+# Indicador: Sífilis Adquirida (SINAN/SIFA)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "SIFA"
+NOME_INDICADOR = "TAXA_INCIDENCIA_SIFA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Sífilis Adquirida (por 100.000 hab.) a partir do SINAN/SIFA."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CRITERIO',
+        codigos_confirmados=['1', '2', '3'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Sífilis Adquirida (SINAN/SIFA).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"sifilis_adquirida_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: sifilis_congenita.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/sifilis_congenita.py
+# Indicador: Sífilis Congênita (SINAN/SIFC)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "SIFC"
+NOME_INDICADOR = "TAXA_INCIDENCIA_SIFC"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Sífilis Congênita (por 100.000 hab.) a partir do SINAN/SIFC."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Sífilis Congênita (SINAN/SIFC).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"sifilis_congenita_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: sifilis_gestante.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/sifilis_gestante.py
+# Indicador: Sífilis em Gestante (SINAN/SIFG)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "SIFG"
+NOME_INDICADOR = "TAXA_INCIDENCIA_SIFG"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Sífilis em Gestante (por 100.000 hab.) a partir do SINAN/SIFG."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Sífilis em Gestante (SINAN/SIFG).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"sifilis_gestante_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
+
+
+================================================================================
+ARQUIVO: sindrome_rubeola_congenita.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/sindrome_rubeola_congenita.py
+# Indicador: Síndrome da Rubéola Congênita (SINAN/SRC)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "SRC"
+NOME_INDICADOR = "TAXA_INCIDENCIA_SRC"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de síndrome da rubéola congênita (por 100.000 hab.) a partir do SINAN/SRC."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1', '2'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Síndrome da Rubéola Congênita (SINAN/SRC).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: tetano_acidental.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/tetano_acidental.py
+# Indicador: Tétano Acidental (SINAN/TETA)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "TETA"
+NOME_INDICADOR = "TAXA_INCIDENCIA_TETANO_ACIDENTAL"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de tétano acidental (por 100.000 hab.) a partir do SINAN/TETA."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Tétano Acidental (SINAN/TETA).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: tetano_neonatal.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/tetano_neonatal.py
+# Indicador: Tétano Neonatal (SINAN/TETN)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "TETN"
+NOME_INDICADOR = "TAXA_INCIDENCIA_TETANO_NEONATAL"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de tétano neonatal (por 100.000 hab.) a partir do SINAN/TETN."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Tétano Neonatal (SINAN/TETN).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: toxoplasmose_congenita.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/toxoplasmose_congenita.py
+# Indicador: Toxoplasmose Congênita (SINAN/TOXC)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "TOXC"
+NOME_INDICADOR = "TAXA_INCIDENCIA_TOXOPLASMOSE_CONGENITA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de toxoplasmose congênita (por 100.000 hab.) a partir do SINAN/TOXC."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Toxoplasmose Congênita (SINAN/TOXC).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: toxoplasmose_gestacional.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/toxoplasmose_gestacional.py
+# Indicador: Toxoplasmose Gestacional (SINAN/TOXG)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "TOXG"
+NOME_INDICADOR = "TAXA_INCIDENCIA_TOXOPLASMOSE_GESTACIONAL"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de incidência de toxoplasmose gestacional (por 100.000 hab.) a partir do SINAN/TOXG."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro='CLASSI_FIN',
+        codigos_confirmados=['1'],
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Toxoplasmose Gestacional (SINAN/TOXG).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: transtorno_mental_trabalho.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/transtorno_mental_trabalho.py
+# Indicador: Transtorno Mental Relacionado ao Trabalho (SINAN/MENT)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "MENT"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_TRANSTORNO_MENTAL_TRAB"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a taxa de notificação de transtorno mental relacionado ao trabalho (por 100.000 hab.) a partir do SINAN/MENT."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Transtorno Mental Relacionado ao Trabalho (SINAN/MENT).")
+    parser.add_argument("--ufs", nargs="+", required=True, help="Lista de UFs (ex: TO SP).")
+    parser.add_argument("--anos", nargs="+", type=int, required=True, help="Lista de anos (ex: 2023 2024).")
+    parser.add_argument("--populacao", required=True, help="Caminho para o CSV de população estimada.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.populacao)
+    if df_resultado is not None and not df_resultado.empty:
+        print(df_resultado.head(20))
+        print(f"\nTotal de linhas: {len(df_resultado)}")
+    else:
+        print("Nenhum dado retornado.")
+
+
+================================================================================
+ARQUIVO: violencia_interpessoal.py
+================================================================================
+
+# -*- coding: utf-8 -*-
+# Arquivo: src/features/violencia_interpessoal.py
+# Indicador: Violência Interpessoal/Autoprovocada (SINAN/VIOL)
+
+import argparse
+from pathlib import Path
+from ..utils.dataloaders import processar_agravo_sinan_generico
+
+DIS_CODE = "VIOL"
+NOME_INDICADOR = "TAXA_NOTIFICACAO_VIOLENCIA"
+
+
+def processar_dados(ufs, anos, arquivo_populacao, **kwargs):
+    """Calcula a Taxa de Violência Interpessoal/Autoprovocada (por 100.000 hab.) a partir do SINAN/VIOL."""
+    return processar_agravo_sinan_generico(
+        ufs, anos, arquivo_populacao,
+        dis_code=DIS_CODE,
+        nome_indicador=NOME_INDICADOR,
+        coluna_filtro=None,
+        codigos_confirmados=None,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Calcula a Taxa de Violência Interpessoal/Autoprovocada (SINAN/VIOL).")
+    RAIZ_PROJETO = Path(__file__).resolve().parent.parent.parent
+    parser.add_argument("--ufs", nargs="+", default=["TO"], help="Lista de UFs (ex: TO PA MG)")
+    parser.add_argument("--anos", nargs="+", type=int, default=[2022], help="Lista de anos (ex: 2022 2023)")
+    caminho_pop_padrao = RAIZ_PROJETO / "dados" / "processados" / "populacao_estimada_completa_spline.csv"
+    parser.add_argument("--pop", type=str, default=str(caminho_pop_padrao), help="Arquivo CSV com população municipal")
+    parser.add_argument("--saida", type=str, default=None, help="Caminho completo do arquivo CSV de saída.")
+    args = parser.parse_args()
+
+    df_resultado = processar_dados(ufs=args.ufs, anos=args.anos, arquivo_populacao=args.pop)
+
+    if not df_resultado.empty:
+        caminho_saida_csv = args.saida
+        if caminho_saida_csv is None:
+            output_dir = RAIZ_PROJETO / "dados" / "processados" / "indicadores"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            ufs_str = '-'.join(args.ufs).lower()
+            anos_str = '-'.join(map(str, args.anos))
+            caminho_saida_csv = output_dir / f"violencia_interpessoal_{ufs_str}_{anos_str}.csv"
+        df_resultado.to_csv(caminho_saida_csv, index=False, sep=';', encoding='utf-8-sig')
+        print(f"\n📄 CSV salvo em: '{caminho_saida_csv}'")
+    else:
+        print("⚠️ Nenhum resultado para salvar.")
