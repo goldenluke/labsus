@@ -1,0 +1,41 @@
+# Ambientes e lixo de sistema
+.venv/
+venv/
+env/
+__pycache__/
+.DS_Store
+.env
+db.sqlite3
+node_modules/
+mapa.geojson
+codigo_completo.txt
+
+# BLOQUEIO DE DADOS (O que causa o erro de upload)
+*.csv
+*.parquet
+*.shp
+*.shx
+*.dbf
+referencia/
+data/
+dados_otimizados/
+media/
+uploads/
+*.astro
+
+# LIBERAÇÃO EXPLÍCITA DE CÓDIGO (O que DEVE subir)
+!api/
+!src/
+!backend_project/
+!frontend/
+!*.py
+!*.js
+!*.jsx
+!*.css
+!*.html
+!*.json
+!*.png
+!*.md
+!.gitignore
+models/phi-2.gguf
+models/
